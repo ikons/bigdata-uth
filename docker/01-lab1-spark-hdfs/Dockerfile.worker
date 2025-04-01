@@ -1,0 +1,10 @@
+FROM apache/spark
+USER root
+COPY worker.sh /worker.sh
+RUN chmod +x /worker.sh
+RUN mkdir -p /opt/spark/conf
+COPY spark-defaults.conf /opt/spark/conf/spark-defaults.conf
+ENV SPARK_WORKER_LOG=/opt/spark/logs
+ENV SPARK_WORKER_WEBUI_PORT=8081
+EXPOSE 8081
+CMD ["/bin/bash", "-c", "/worker.sh"]

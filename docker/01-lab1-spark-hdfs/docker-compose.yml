@@ -1,0 +1,157 @@
+
+services:
+  # ===================== HADOOP HDFS =====================
+  namenode:
+    image: bde2020/hadoop-namenode:latest
+    container_name: namenode
+    restart: always
+    ports:
+      - "9870:9870"  # Web UI
+      - "9000:9000"  # HDFS
+    environment:
+      - CLUSTER_NAME=hadoop-cluster
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+    volumes:
+      - namenode_data:/hadoop/dfs/name #Αποθηκεύει σε μόνιμο τόμο τα περιεχόμενα το σύστημα αρχείων του namenode
+      - namenode-upload:/mnt/upload #Μόνιμος τόμος που χρησιμοποιείται για να ανεβάζουμε αρχεία στο hdfs μέσω του namenode container
+    networks:
+      - hadoop-net
+
+  datanode1:
+    image: bde2020/hadoop-datanode:latest
+    container_name: datanode1
+    restart: always
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+    volumes:
+      - datanode1_data:/hadoop/dfs/data #Μόνιμος τόμος που περιέχει τα blocks του datanode1
+    depends_on:
+      - namenode
+    networks:
+      - hadoop-net
+
+  datanode2:
+    image: bde2020/hadoop-datanode:latest
+    container_name: datanode2
+    restart: always
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+    volumes:
+      - datanode2_data:/hadoop/dfs/data #Μόνιμος τόμος που περιέχει τα blocks του datanode2
+    depends_on:
+      - namenode
+    networks:
+      - hadoop-net
+
+  datanode3:
+    image: bde2020/hadoop-datanode:latest
+    container_name: datanode3
+    restart: always
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+    volumes:
+      - datanode3_data:/hadoop/dfs/data #Μόνιμος τόμος που περιέχει τα blocks του datanode3
+    depends_on:
+      - namenode
+    networks:
+      - hadoop-net
+
+  # ===================== SPARK =====================
+  spark-master:
+    build:
+        context: .
+        dockerfile: Dockerfile.master  # Build using the custom Dockerfile for the master
+    container_name: spark-master
+    restart: always
+    ports:
+      - "8080:8080"  # Spark Web UI
+      - "7077:7077"  # Spark Master
+      - "8081:8081" # Spark History Server
+    environment:
+      - SPARK_MASTER_HOST=spark-master
+      - SPARK_HOME=/opt/spark
+    volumes:
+      - spark-master-upload:/mnt/upload  # Μόνιμος τόμος για την εκτέλεση τοπικών αρχείων python από το μηχάνημα host (windows)
+    networks:
+      - hadoop-net
+    depends_on:
+      - namenode
+
+  spark-worker1:
+    build:
+        context: .
+        dockerfile: Dockerfile.worker  # Build using the custom Dockerfile for the worker
+    container_name: spark-worker1
+    restart: always
+    ports:
+      - "8082:8081"  # Spark worker1 Web UI
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=3G
+    depends_on:
+      - spark-master
+    networks:
+      - hadoop-net
+
+  spark-worker2:
+    build:
+        context: .
+        dockerfile: Dockerfile.worker  # Build using the custom Dockerfile for the worker
+    container_name: spark-worker2
+    restart: always
+    ports:
+      - "8083:8081"  # Spark worker2 Web UI
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=3G
+    depends_on:
+      - spark-master
+    networks:
+      - hadoop-net
+
+  spark-worker3:
+    build:
+        context: .
+        dockerfile: Dockerfile.worker  # Build using the custom Dockerfile for the worker
+    container_name: spark-worker3
+    restart: always
+    ports:
+      - "8084:8081"  # Spark worker3 Web UI
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=3G
+    depends_on:
+      - spark-master
+    networks:
+      - hadoop-net
+
+  spark-worker4:
+    build:
+        context: .
+        dockerfile: Dockerfile.worker  # Build using the custom Dockerfile for the worker
+    container_name: spark-worker4
+    restart: always
+    ports:
+      - "8085:8081"  # Spark worker4 Web UI
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=3G
+    depends_on:
+      - spark-master
+    networks:
+      - hadoop-net
+
+volumes:
+  namenode_data:
+  namenode-upload:
+  datanode1_data:
+  datanode2_data:
+  datanode3_data:
+  spark-master-upload:
+
+networks:
+  hadoop-net:

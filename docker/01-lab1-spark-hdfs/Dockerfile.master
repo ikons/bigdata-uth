@@ -1,0 +1,12 @@
+FROM apache/spark
+USER root
+COPY startup.sh /startup.sh
+RUN chmod +x /startup.sh
+RUN mkdir -p /opt/spark/conf
+COPY spark-defaults.conf /opt/spark/conf/spark-defaults.conf
+ENV SPARK_MASTER_PORT=7077
+ENV SPARK_MASTER_WEBUI_PORT=8080
+ENV SPARK_MASTER_LOG=/opt/spark/logs
+EXPOSE 8080 7077 6066 8081
+
+CMD ["/bin/bash", "-c", "/startup.sh"]
