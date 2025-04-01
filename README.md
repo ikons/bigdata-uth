@@ -48,7 +48,7 @@
 
 ---
 
-## 🐳 Lab 01: Εκτέλεση Spark + HDFS μέσω Docker
+## 🐳 Lab 01a: Εκτέλεση Spark + HDFS μέσω Docker
 
 📄 Οδηγός: [`01_lab1-docker.docx`](./odigoi/01_lab1-docker.docx)
 
@@ -71,7 +71,7 @@ docker exec spark-master spark-submit /mnt/upload/wordcount.py
 
 ---
 
-## ☁️ Lab 01 (εναλλακτικά): Spark σε Kubernetes
+## ☁️ Lab 01b: Spark σε Kubernetes
 
 📄 Οδηγός: [`01_lab1-k8s.docx`](./odigoi/01_lab1-k8s.docx)
 
