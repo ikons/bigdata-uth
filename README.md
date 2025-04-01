@@ -1,23 +1,116 @@
 # 🔥 Big Data με Apache Spark, HDFS, Docker & Kubernetes
 
-Αυτό το αποθετήριο περιέχει κώδικα, δεδομένα και πλήρεις οδηγίες για την εκτέλεση εργασιών **Apache Spark** με **RDDs**, **DataFrames**, **Map/Reduce** και **Word Count**, χρησιμοποιώντας υποδομή **τοπική (Docker)** ή **κατανεμημένη (Kubernetes)**, με υποστήριξη **HDFS** και **Spark History Server**.
+Αυτό το αποθετήριο περιέχει κώδικα, δεδομένα και οδηγίες για την εκτέλεση εργασιών **Apache Spark** με **RDDs**, **DataFrames** και **Map/Reduce** με χρήση **τοπικής (Docker)** και **κατανεμημένης (Kubernetes)** υποδομής.
+
+---
+
+## 📘 Σειρά Μελέτης / Εκτέλεσης Οδηγιών
+
+1. `0_Preparatory_lab_Docker_Desktop-wsl.pdf`: Προετοιμασία περιβάλλοντος (WSL + Docker Desktop)
+2. `0_pycharm_spark_implementation.docx`: Εκτέλεση Spark τοπικά με PyCharm
+3. `01_lab1-docker.docx`: Εκκίνηση Spark + HDFS μέσω Docker Compose
+4. `01_lab1-k8s.docx`: Εκτέλεση Spark Jobs σε Kubernetes (vdcloud)
+5. `02_lab2.docx`: Εκτέλεση ερωτημάτων συνένωσης με χρήση RDD και DataFrames
 
 ---
 
 ## 📁 Δομή Αποθετηρίου
 
 - `code/`: Κώδικας Spark σε Python (RDD & DataFrame)
-- `examples/`: Αρχεία CSV για δοκιμές (employees, departments, text)
+- `examples/`: CSV αρχεία για δοκιμές (employees, departments, text)
 - `docker/`
   - `01-lab1-spark-hdfs/`: Spark + HDFS setup με Docker Compose
   - `02-lab2-spark-history-server/`: Spark History Server setup με Docker
+- `odigoi/`: Όλοι οι οδηγοί σε μορφή `.docx` ή `.pdf`
 - `README.md`: Οδηγίες χρήσης και εκτέλεσης
 
 ---
 
-## 🧪 Εκτέλεση Ερωτημάτων Spark
 
-Μπορείτε να εκτελέσετε τις παρακάτω εργασίες με `spark-submit` από το HDFS:
+
+## 💻 Εκτέλεση με PyCharm (Τοπική Ανάπτυξη)
+
+📄 Οδηγός: [`odigoi/0_pycharm_spark_implementation.docx`](./odigoi/0_pycharm_spark_implementation.docx)
+
+- Χρήση `venv`, εγκατάσταση `pyspark` & `psutil`
+- Ρύθμιση μεταβλητών περιβάλλοντος στο Run Configuration
+- Υποστήριξη Spark UI μέσω `localhost:4040`
+
+---
+
+## 🧱 Προετοιμασία Περιβάλλοντος (WSL + Docker Desktop)
+
+📄 Οδηγός: [`odigoi/0_Preparatory_lab_Docker_Desktop-wsl.pdf`](./odigoi/0_Preparatory_lab_Docker_Desktop-wsl.pdf)
+
+- Εγκατάσταση WSL 2 και Ubuntu
+- Ρύθμιση Docker Desktop για χρήση WSL backend
+- Επιβεβαίωση εγκατάστασης και τεστ με `hello-world`
+
+---
+
+## 🐳 Lab 01: Εκτέλεση Spark + HDFS μέσω Docker
+
+📄 Οδηγός: [`odigoi/01_lab1-docker.docx`](./odigoi/01_lab1-docker.docx)
+
+```bash
+cd docker/01-lab1-spark-hdfs
+docker compose up -d
+```
+
+- Spark UI: http://localhost:8080  
+- HDFS NameNode: http://localhost:9870  
+- Εκτέλεση παραδείγματος:
+```bash
+docker exec spark-master spark-submit /mnt/upload/wordcount.py
+```
+
+📂 Ανέβασμα αρχείων:  
+```
+\wsl.localhost\docker-desktop\mnt\... (shared volume path)
+```
+
+---
+
+## ☁️ Lab 01 (εναλλακτικά): Spark σε Kubernetes
+
+📄 Οδηγός: [`odigoi/01_lab1-k8s.docx`](./odigoi/01_lab1-k8s.docx)
+
+- Εκτελεί Spark σε Kubernetes (vdcloud)
+- Απαιτεί OpenVPN & χρήση `k9s` για παρακολούθηση
+
+### Παράδειγμα `spark-submit`:
+
+```bash
+spark-submit   --master k8s://https://<k8s-cluster-endpoint>   --deploy-mode cluster   --conf spark.kubernetes.container.image=<spark-image>   hdfs://.../wordcount_localdir.py
+```
+
+---
+
+## 🔁 Lab 02: Εκτέλεση ερωτημάτων συνένωσης με την χρήση RDD και DataFrames
+
+📄 Οδηγός: [`odigoi/02_lab2.docx`](./odigoi/02_lab2.docx)
+
+Σε αυτό το εργαστήριο υλοποιούνται ερωτήματα συνένωσης πινάκων (joins) τόσο με RDDs όσο και με DataFrames. Περιλαμβάνει την ταξινόμηση και την ομαδοποίηση αποτελεσμάτων, καθώς και χρήση SQL queries.
+
+Στο τέλος του οδηγού, γίνεται και σύντομη αναφορά στην ενεργοποίηση και χρήση του **Spark History Server** για την παρακολούθηση των ερωτημάτων μέσω web UI.
+
+---
+
+## ⚙️ Προετοιμασία Δεδομένων στο HDFS
+
+```bash
+# Αντιγραφή των φακέλων στο HDFS
+hadoop fs -put examples examples
+hadoop fs -put code code
+
+# Επιβεβαίωση
+hadoop fs -ls examples
+hadoop fs -ls code
+```
+
+---
+
+## 🧪 Εκτέλεση Ερωτημάτων Spark
 
 | Ερώτημα       | Περιγραφή                                  | Υλοποίηση |
 |---------------|---------------------------------------------|------------|
@@ -25,6 +118,8 @@
 | Query 2       | 3 υψηλόμισθοι υπάλληλοι του "Dep A"         | RDD / DF   |
 | Query 3       | Άθροισμα μισθών ανά τμήμα                   | DF         |
 | Word Count    | Καταμέτρηση λέξεων σε αρχείο κειμένου       | RDD        |
+
+📈 Τα παραπάνω queries μπορούν να παρακολουθηθούν μέσω του Spark History Server (αναφορά στο τέλος του Lab 02).
 
 ### Παράδειγμα εκτέλεσης:
 
@@ -34,95 +129,20 @@ spark-submit hdfs://hdfs-namenode:9000/user/<user>/code/RddQ1.py
 
 ---
 
-## ⚙️ Προετοιμασία Δεδομένων (HDFS)
 
-```bash
-git clone https://github.com/ikons/bigdata.git
-cd bigdata
 
-# Ανέβασμα παραδειγμάτων
-hadoop fs -put examples examples
-
-# Ανέβασμα κώδικα
-hadoop fs -put code code
-```
-
----
-
-## 🐳 Lab 01: Εκτέλεση Spark + HDFS μέσω Docker
-
-Οδηγίες: [`01_lab1-docker.docx`](./01_lab1-docker.docx)
-
-```bash
-cd docker/01-lab1-spark-hdfs
-docker compose up -d
-```
-
-- Spark UI: http://localhost:8080  
-- HDFS NameNode: http://localhost:9870  
-
-#### Εκτέλεση παραδείγματος:
-
-```bash
-docker exec spark-master spark-submit /mnt/upload/wordcount.py
-```
-
-📁 Ανέβασμα αρχείων:  
-```
-\wsl.localhost\docker-desktop\mnt\docker-desktop-disk\data\docker\volumes\01-lab1-spark-hdfs_spark-master-upload\_data
-```
-
----
-
-## ☁️ Lab 01 (εναλλακτικά): Εκτέλεση Spark σε Kubernetes
-
-Οδηγίες: [`01_lab1-k8s.docx`](./01_lab1-k8s.docx)
-
-- Εκτελεί Spark σε περιβάλλον Kubernetes (vdcloud)
-- Απαιτεί σύνδεση μέσω VPN και χρήση `k9s` για παρακολούθηση jobs
-
-### Παράδειγμα εκτέλεσης:
-
-```bash
-spark-submit   --master k8s://https://<k8s-cluster-endpoint>   --deploy-mode cluster   --conf spark.kubernetes.container.image=<spark-image>   hdfs://.../wordcount_localdir.py
-```
-
----
-
-## 📈 Lab 02: Spark History Server
-
-Οδηγίες: [`02_lab2.docx`](./02_lab2.docx)
-
-- Καταγραφή ιστορικού Spark jobs
-- Προβολή μέσω web UI: http://localhost:18081
-- Απαραίτητο: ενεργοποίηση logging στον κώδικα
-
-```python
-conf.set("spark.eventLog.enabled", "true")
-conf.set("spark.eventLog.dir", "hdfs://...")
-```
-
----
-
-## 📝 Συμβουλή για logs
-
-Για λιγότερη έξοδο στην κονσόλα, προσθέστε:
-
-```python
-spark.sparkContext.setLogLevel("ERROR")
-```
-
----
 
 ## 📄 Αρχεία Οδηγιών
 
-- [01_lab1-docker.docx](./01_lab1-docker.docx)
-- [01_lab1-k8s.docx](./01_lab1-k8s.docx)
-- [02_lab2.docx](./02_lab2.docx)
+- [0_Preparatory_lab_Docker_Desktop-wsl.pdf](./odigoi/0_Preparatory_lab_Docker_Desktop-wsl.pdf)
+- [0_pycharm_spark_implementation.docx](./odigoi/0_pycharm_spark_implementation.docx)
+- [01_lab1-docker.docx](./odigoi/01_lab1-docker.docx)
+- [01_lab1-k8s.docx](./odigoi/01_lab1-k8s.docx)
+- [02_lab2.docx](./odigoi/02_lab2.docx)
 
 ---
 
 ## 👤 Συντελεστής
 
 **ikons**  
-Για απορίες ή συνεισφορά, χρησιμοποίησε τα [GitHub Issues](https://github.com/ikons/bigdata/issues)
+📬 Για απορίες: [GitHub Issues](https://github.com/ikons/bigdata/issues)
