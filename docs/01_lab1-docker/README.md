@@ -82,7 +82,7 @@ CMD ["python", "/app.py"]
 
 ```bash
 docker build -t my-python-app .
-```bash
+```
 
 
 ![Εικόνα 4](images/img4.png)
