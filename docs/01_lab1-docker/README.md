@@ -285,7 +285,7 @@ docker exec spark-master cat /mnt/upload/wordcount.py
 Και θα δείτε το `wordcount.py` αρχείο να τυπώνεται:
 
 
-```
+```python
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
 conf = SparkConf().setAppName("Word Count example") \
