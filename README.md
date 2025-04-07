@@ -6,7 +6,7 @@
 
 ## 📘 Σειρά Μελέτης / Εκτέλεσης Οδηγιών
 
-1. [`0_Preparatory_lab_Docker_Desktop-wsl.pdf`](./odigoi/0_Preparatory_lab_Docker_Desktop-wsl.pdf): Προετοιμασία περιβάλλοντος (WSL + Docker Desktop)
+1. [00_Preparatory-lab](docs/00_Preparatory-lab/): Προετοιμασία περιβάλλοντος (WSL + Docker Desktop)
 2. [`0_pycharm_spark_implementation.docx`](./odigoi/0_pycharm_spark_implementation.docx): Εκτέλεση Spark τοπικά με PyCharm
 3. [`01_lab1-docker.docx`](./odigoi/01_lab1-docker.docx): Εκκίνηση Spark + HDFS μέσω Docker Compose
 4. [`01_lab1-k8s.docx`](./odigoi/01_lab1-k8s.docx): Εκτέλεση Spark Jobs σε Kubernetes (vdcloud)
