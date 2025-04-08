@@ -245,7 +245,7 @@ job_id = sc.applicationId
 
 # Δημιουργία ονόματος εξόδου με βάση το job_id (για αποφυγή σύγκρουσης)
 
-# ⚠️ Αντικατέστησε το ikons με το δικό σου 👇 username
+# ⚠️ Αντικατέστησε το testuser με το δικό σου 👇 username
 output_dir = f"hdfs://hdfs-namenode:9000/user/testuser/wordcount_output_{job_id}"
 
 # Διαβάζει το αρχείο κειμένου από το HDFS
