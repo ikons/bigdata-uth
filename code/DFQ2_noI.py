@@ -9,7 +9,7 @@ spark = SparkSession \
 sc = spark.sparkContext
 
 # ΕΛΑΧΙΣΤΟΠΟΙΗΣΗ ΕΞΟΔΩΝ ΚΑΤΑΓΡΑΦΗΣ (LOGGING)
-sc.setLogLevel("ERROR")
+sc.sparkContext.setLogLevel("ERROR")
 
 job_id = spark.sparkContext.applicationId
 output_dir = f"hdfs://hdfs-namenode:9000/user/{username}/DFQ2_nol_{job_id}"

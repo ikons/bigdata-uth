@@ -124,7 +124,8 @@ cd
 mkdir .kube
 
 # Αντιγραφή του αρχείου config από το σύστημα αρχείων των Windows στο WSL
-cp /mnt/c/Users/<username>/Downloads/config ~/.kube/config
+# ⚠️ Αντικατέστησε 👇 το ikons με το δικό σου username των Windows
+cp /mnt/c/Users/ikons/Downloads/config ~/.kube/config
 ```
 
 
@@ -177,13 +178,14 @@ tar -xzf hadoop-3.4.1.tar.gz
 
 
 
-Προσθέστε τις παρακάτω μεταβλητές περιβάλλοντος στο αρχείο ρυθμίσεων περιβάλλοντος του χρήστη σας. Όπου **<username>** θα το αλλάξετε με το δικό σας. Στην δική μου περίπτωση είναι `export HADOOP_USER_NAME=ikons`
+Προσθέστε τις παρακάτω μεταβλητές περιβάλλοντος στο αρχείο ρυθμίσεων περιβάλλοντος του χρήστη σας. Όπου `ikons` θα το αλλάξετε με το δικό σας. Στην δική μου περίπτωση είναι `export HADOOP_USER_NAME=ikons`
 
 ```bash
 export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 export SPARK_HOME=$HOME/spark-3.5.5-bin-hadoop3
 export PATH=$HOME/spark-3.5.5-bin-hadoop3/bin:$HOME/hadoop-3.4.1/bin:$PATH
-export HADOOP_USER_NAME=<username>
+# ⚠️ Αντικατέστησε 👇 το ikons με το δικό σου username
+export HADOOP_USER_NAME=ikons
 ```
 
 
@@ -234,8 +236,9 @@ from pyspark import SparkContext  # Εισαγωγή της κλάσης SparkCo
 # Δημιουργία SparkContext με όνομα εφαρμογής "WordCount"
 sc = SparkContext(appName="WordCount")
 
-# Ορισμός εισόδου - αρχείο στο HDFS (αντικαταστήστε το <username> με το δικό σας όνομα χρήστη)
-input_dir = "hdfs://hdfs-namenode:9000/user/<username>/text.txt"
+# Ορισμός εισόδου - αρχείο στο HDFS 
+# ⚠️ Αντικατέστησε 👇 το ikons με το δικό σου username
+input_dir = "hdfs://hdfs-namenode:9000/user/ikons/text.txt"
 
 # Απόκτηση του μοναδικού ID της εφαρμογής Spark
 job_id = sc.applicationId
