@@ -25,7 +25,7 @@
 - `docker/`
   - `01-lab1-spark-hdfs/`: Spark + HDFS setup με Docker Compose
   - `02-lab2-spark-history-server/`: Spark History Server setup με Docker
-- `docs/': 📘 Όλοι οι οδηγοί σε μορφή Markdown
+- `docs/`: 📘 Όλοι οι οδηγοί σε μορφή Markdown
 - `odigoi/`: 🧾 Οδηγοί σε `.docx` και `.pdf`
 
 ---
