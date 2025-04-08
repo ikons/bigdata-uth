@@ -823,31 +823,32 @@ joined_data.show()
 joined_data.coalesce(1).write.format("csv").option("header", "false").save(output_dir)
 ```
 
-Μπορούμε να εκτελέσουμε **ενώσεις (join)** στα δεδομένα χρησιμοποιώντας **μόνο τις ενσωματωμένες συναρτήσεις των DataFrames**. Για παράδειγμα, για να υπολογίσουμε το **άθροισμα των μισθών ανά τμήμα**, μπορούμε να δημιουργήσουμε το παρακάτω πρόγραμμα. Για να εκτελέσετε το πρόγραμμα **DF3.py**, χρησιμοποιήστε την εξής εντολή:
+Μπορούμε να εκτελέσουμε **ενώσεις (join)** στα δεδομένα χρησιμοποιώντας **μόνο τις ενσωματωμένες συναρτήσεις των DataFrames**. Για παράδειγμα, για να υπολογίσουμε το **άθροισμα των μισθών ανά τμήμα**, μπορούμε να δημιουργήσουμε το παρακάτω πρόγραμμα. Για να εκτελέσετε το πρόγραμμα **DF2b.py**, χρησιμοποιήστε την εξής εντολή:
+
 
 ```bash
 # ⚠️ Αντικατέστησε το "ikons" με το δικό σου 👇 username
-spark-submit hdfs://hdfs-namenode:9000/user/ikons/code/DF3.py
+spark-submit hdfs://hdfs-namenode:9000/user/ikons/code/DF2b.py
 ```
 
-DF3.py:
+DF2b.py:
 
 ```python
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructField, StructType, IntegerType, FloatType, StringType
 
-# ⚠️ Αντικατέστησε 👇 το "ikons" με το δικό σου username
+# ⚠️ Αντικατέστησε το "ikons" 👇 με το δικό σου username
 username = "ikons"
 spark = SparkSession \
     .builder \
-    .appName("DF query 3 execution") \
+    .appName("DF query 2b execution") \
     .getOrCreate()
 sc = spark.sparkContext
 # ΕΛΑΧΙΣΤΟΠΟΙΗΣΗ ΕΞΟΔΩΝ ΚΑΤΑΓΡΑΦΗΣ (LOGGING)
 sc.setLogLevel("ERROR")
 
 job_id = spark.sparkContext.applicationId
-output_dir = f"hdfs://hdfs-namenode:9000/user/{username}/DF3_{job_id}"
+output_dir = f"hdfs://hdfs-namenode:9000/user/{username}/DF2b_{job_id}"
 
 # Ορισμός σχήματος για το DataFrame των υπαλλήλων
 employees_schema = StructType([
@@ -894,6 +895,7 @@ joinedDf.coalesce(1).write.format("csv").option("header", "false").save(f"{outpu
 
 # Αποθήκευση του ομαδοποιημένου DataFrame στο HDFS
 groupedDf.coalesce(1).write.format("csv").option("header", "false").save(f"{output_dir}_grouped")
+
 ```
 
 Αρχικά, διαβάζουμε τα δύο σύνολα δεδομένων από το **HDFS**. Στη συνέχεια, χρησιμοποιούμε την ενσωματωμένη συνάρτηση [`join`](  https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.DataFrame.join.html), καθορίζοντας ως κλειδί ένωσης το `dep_id` του υπαλλήλου (`employees_df.dep_id`) και το `id` του τμήματος (`departments_df.id`), καθώς και τον τύπο της συνένωσης — στην προκειμένη περίπτωση επιλέγουμε **"inner"**.
@@ -925,6 +927,94 @@ groupedDf.coalesce(1).write.format("csv").option("header", "false").save(f"{outp
 |     2|     7050.0|
 +------+-----------+
 ```
+
+Για το ερώτημα 3:
+
+Για να εκτελέσετε το πρόγραμμα `DFQ3.py`, χρησιμοποιήστε την παρακάτω εντολή:
+
+```bash
+# ⚠️ Αντικατέστησε το "ikons" με το δικό σου 👇 username
+spark-submit hdfs://hdfs-namenode:9000/user/ikons/code/DFQ3.py
+```
+Στον κώδικα δίνεται ένα παράδειγμα χρήσης των [User Defined Functions (UDFs)](https://spark.apache.org/docs/latest/sql-ref-functions.html#udfs-user-defined-functions)  .
+
+DFQ3.py
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql.types import StructField, StructType, IntegerType, FloatType, StringType
+from pyspark.sql.functions import col, udf
+
+# ⚠️ Αντικατέστησε το "ikons" 👇 με το δικό σου username
+username = "ikons"
+spark = SparkSession \
+    .builder \
+    .appName("DF query 3 execution") \
+    .getOrCreate()
+sc = spark.sparkContext
+# ΕΛΑΧΙΣΤΟΠΟΙΗΣΗ ΕΞΟΔΩΝ ΚΑΤΑΓΡΑΦΗΣ (LOGGING)
+sc.setLogLevel("ERROR")
+
+job_id = spark.sparkContext.applicationId
+output_dir = f"hdfs://hdfs-namenode:9000/user/{username}/DF3_{job_id}"
+
+# Ορισμός σχήματος για το DataFrame των υπαλλήλων
+employees_schema = StructType([
+    StructField("emp_id", IntegerType()),
+    StructField("emp_name", StringType()),
+    StructField("salary", FloatType()),
+    StructField("dep_id", IntegerType()),
+])
+
+# Φόρτωση του DataFrame των υπαλλήλων
+employees_df = spark.read.format('csv') \
+    .options(header='false') \
+    .schema(employees_schema) \
+    .load(f"hdfs://hdfs-namenode:9000/user/{username}/examples/employees.csv")
+
+# Δήλωση συνάρτησης υπολογισμού του ετήσιου εισοδήματος
+def calculate_yearly_income(salary):
+    return 14*salary
+# Καταχώρηση του udf
+calculate_yearly_income_udf = udf(calculate_yearly_income, FloatType())
+# Υπολογισμός με δημιουργία νέας στήλης
+employees_yearly_income_df = employees_df \
+    .withColumn("yearly_income", calculate_yearly_income_udf(col("salary"))) \
+    .select("emp_name", "yearly_income")
+# Εμφάνιση αποτελέσματος
+employees_yearly_income_df.show()
+# Αποθήκευση του DataFrame στο HDFS
+employees_yearly_income_df.coalesce(1) \
+    .write.format("csv") \
+    .option("header", "false") \
+    .save(f"{output_dir}")
+```
+
+Για την υλοποίηση, αρχικά ορίζουμε μια συνάρτηση που δέχεται ως όρισμα έναν αριθμό (`salary`), τον πολλαπλασιάζει με 14 και επιστρέφει το αποτέλεσμα. Στη συνέχεια, ορίζουμε το αντίστοιχο **UDF** (user defined function) που μπορεί να εφαρμοστεί πάνω στο **DataFrame** `employees_df`, και συγκεκριμένα με είσοδο τη στήλη `salary`.
+
+**Εξετάστε το εξής**: Θα μπορούσε το ίδιο αποτέλεσμα να επιτευχθεί χωρίς τη χρήση UDF; Πώς επηρεάζεται η επίδοση σε κάθεμία από τις δύο περιπτώσεις;
+
+**Παράδειγμα εξόδου:**
+
+```
++----------+-------------+
+|  emp_name|yearly_income|
++----------+-------------+
+|  George R|      28000.0|
+|    John K|      14000.0|
+|    Mary T|      29400.0|
+|  George T|      29400.0|
+|   Helen K|      14700.0|
+|   Jerry L|       7700.0|
+|  Marios K|      14000.0|
+|  George K|      35000.0|
+|Vasilios D|      49000.0|
+| Yiannis T|      21000.0|
+| Antonis T|      35000.0|
++----------+-------------+
+```
+
+
 
 ## Εγκατάσταση Spark History Server για προβολή ιστορικών εκτελέσεων
 
