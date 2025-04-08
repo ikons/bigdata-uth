@@ -184,7 +184,7 @@ tar -xzf hadoop-3.4.1.tar.gz
 export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 export SPARK_HOME=$HOME/spark-3.5.5-bin-hadoop3
 export PATH=$HOME/spark-3.5.5-bin-hadoop3/bin:$HOME/hadoop-3.4.1/bin:$PATH
-# ⚠️ Αντικατέστησε 👇 το iusername με το δικό σου username
+# ⚠️ Αντικατέστησε 👇 το username με το δικό σου username
 export HADOOP_USER_NAME=username
 ```
 
@@ -219,7 +219,7 @@ nano hadoop-3.4.1/etc/hadoop/core-site.xml
 
 http://hdfs-namenode:9870/
 
-όπου επιλέξτε Utilities -> Browse the file system κατόπιν δώστε τον κατάλογο /user/<username>. Εκεί θα μπορείτε να βλέπετε τα αποτελέσματα της εκτέλεσης των εργασιών σας.
+όπου επιλέξτε Utilities -> Browse the file system κατόπιν δώστε τον κατάλογο /user/username. Εκεί θα μπορείτε να βλέπετε τα αποτελέσματα της εκτέλεσης των εργασιών σας.
 
 ![Εικόνα 2](images/img2.png)
 
@@ -237,8 +237,8 @@ from pyspark import SparkContext  # Εισαγωγή της κλάσης SparkCo
 sc = SparkContext(appName="WordCount")
 
 # Ορισμός εισόδου - αρχείο στο HDFS 
-# ⚠️ Αντικατέστησε 👇 το ikons με το δικό σου username
-input_dir = "hdfs://hdfs-namenode:9000/user/ikons/text.txt"
+# ⚠️ Αντικατέστησε 👇 το testuser με το δικό σου username
+input_dir = "hdfs://hdfs-namenode:9000/user/testuser/text.txt"
 
 # Απόκτηση του μοναδικού ID της εφαρμογής Spark
 job_id = sc.applicationId
@@ -299,17 +299,17 @@ spark-submit \
     --name wordcount \
     --conf spark.hadoop.fs.permissions.umask-mode=000 \
     --conf spark.kubernetes.authenticate.driver.serviceAccountName=spark \
-    --conf spark.kubernetes.namespace=<username>-priv \
+    --conf spark.kubernetes.namespace=username-priv \
     --conf spark.executor.instances=5 \
     --conf spark.kubernetes.container.image=apache/spark \
     --conf spark.kubernetes.submission.waitAppCompletion=false \
     --conf spark.eventLog.enabled=true \
-    --conf spark.eventLog.dir=hdfs://hdfs-namenode:9000/user/<username>/logs \
-    --conf spark.history.fs.logDirectory=hdfs://hdfs-namenode:9000/user/<username>/logs \
-    hdfs://hdfs-namenode:9000/user/<username>/wordcount_localdir.py
+    --conf spark.eventLog.dir=hdfs://hdfs-namenode:9000/user/username/logs \
+    --conf spark.history.fs.logDirectory=hdfs://hdfs-namenode:9000/user/username/logs \
+    hdfs://hdfs-namenode:9000/user/username/wordcount_localdir.py
 ```
 
-Αλλάξτε το **<username>** με το όνομα χρήστη που λάβατε στο email, για παράδειγμα εγώ είμαι **ikons**.
+Αλλάξτε το ==username== με το όνομα χρήστη που λάβατε στο email, για παράδειγμα εγώ είμαι **ikons**.
 
 Αυτή η εντολή spark-submit χρησιμοποιείται για να υποβληθεί μια εργασία Spark σε ένα Kubernetes cluster. Παρακάτω εξηγούνται οι παράμετροι της:
 
@@ -318,14 +318,14 @@ spark-submit \
 - `--name wordcount`: Ορίζει το όνομα της εφαρμογής Spark που θα τρέξει στο Kubernetes. Εδώ η εφαρμογή έχει το όνομα `wordcount`.
 - `--conf spark.hadoop.fs.permissions.umask-mode=000`: Ορίζει τα δικαιώματα πρόσβασης του συστήματος αρχείων Hadoop.
 - `--conf spark.kubernetes.authenticate.driver.serviceAccountName=spark`: Ορίζει το όνομα του Kubernetes service account που θα χρησιμοποιηθεί από τον driver. Εδώ, ορίζεται το `spark` ως το service account.
-- `--conf spark.kubernetes.namespace=<username>-priv`: Ορίζει το namespace του Kubernetes που θα χρησιμοποιηθεί για να τρέξει η εργασία. Εδώ, το namespace είναι το `<username>-priv`.
+- `--conf spark.kubernetes.namespace=username-priv`: Ορίζει το namespace του Kubernetes που θα χρησιμοποιηθεί για να τρέξει η εργασία. Εδώ, το namespace είναι το `<username>-priv`.
 - `--conf spark.executor.instances=5`: Ορίζει τον αριθμό των εκτελεστών (executors) που θα δημιουργηθούν για την εκτέλεση της εργασίας. Εδώ, δημιουργούνται 5 εκτελεστές.
 - `--conf spark.kubernetes.container.image=apache/spark`: Ορίζει την εικόνα του container που θα χρησιμοποιηθεί για την εκτέλεση της εργασίας. Εδώ χρησιμοποιείται η εικόνα `apache/spark`.
 - `--conf spark.kubernetes.submission.waitAppCompletion=false` : Καθορίζει αν θα πρέπει να αναμένει την ολοκλήρωση της εφαρμογής πριν τερματιστεί η διαδικασία εκκίνησης. Όταν οριστεί σε `false`, η εργασία Spark ξεκινάει και δεν περιμένει την ολοκλήρωση της εκτέλεσης (fire and forget).
 - `--conf spark.eventLog.enabled=true`: Ενεργοποιεί την καταγραφή των γεγονότων (event logging) της εργασίας Spark. Αυτό επιτρέπει την καταγραφή της εκτέλεσης της εφαρμογής.
-- `--conf spark.eventLog.dir=hdfs://hdfs-namenode:9000/user/<username>/logs`: Ορίζει τη θέση του καταλόγου όπου θα αποθηκεύονται τα αρχεία καταγραφής των γεγονότων. Εδώ, η καταγραφή θα αποθηκευτεί στο HDFS του hdfs-namenode.
-- `--conf spark.history.fs.logDirectory=hdfs://hdfs-namenode:9000/user/<username>/logs`: Ορίζει τη θέση όπου θα αποθηκεύονται τα αρχεία καταγραφής του ιστορικού (history logs) της εφαρμογής Spark για να επιτρέπει την παρακολούθηση του ιστορικού εκτέλεσης μέσω του Spark UI.
-- `hdfs://hdfs-namenode:9000/user/<username>/wordcount_localdir.py`: Ορίζει τη διαδρομή του αρχείου Python που περιέχει τον κώδικα της εφαρμογής. Στην περίπτωση αυτή, το αρχείο `wordcount_localdir.py` βρίσκεται στο HDFS.
+- `--conf spark.eventLog.dir=hdfs://hdfs-namenode:9000/user/username/logs`: Ορίζει τη θέση του καταλόγου όπου θα αποθηκεύονται τα αρχεία καταγραφής των γεγονότων. Εδώ, η καταγραφή θα αποθηκευτεί στο HDFS του hdfs-namenode.
+- `--conf spark.history.fs.logDirectory=hdfs://hdfs-namenode:9000/user/username/logs`: Ορίζει τη θέση όπου θα αποθηκεύονται τα αρχεία καταγραφής του ιστορικού (history logs) της εφαρμογής Spark για να επιτρέπει την παρακολούθηση του ιστορικού εκτέλεσης μέσω του Spark UI.
+- `hdfs://hdfs-namenode:9000/user/username/wordcount_localdir.py`: Ορίζει τη διαδρομή του αρχείου Python που περιέχει τον κώδικα της εφαρμογής. Στην περίπτωση αυτή, το αρχείο `wordcount_localdir.py` βρίσκεται στο HDFS.
 
 Όλοι οι παράμετροι που μπορούν να ρυθμιστούν είναι διαθέσιμοι στην παρακάτω σελίδα
 
@@ -340,30 +340,32 @@ https://spark.apache.org/docs/latest/configuration.html
 
 ## Ρύθμιση προεπιλεγμένων παραμέτρων κατά την εκτέλεση εργασιών spark.
 
-Για να μην χρειάζεται να γράφετε όλες αυτές τις παραμέτρους κάθε φορά που εκτελείτε εργασίες spark, μπορείτε να τις εισάγετε σε ένα αρχείο ρυθμίσεων από όπου το spark θα τις αντλεί κάθε φορά που εκτελείτε την εντολή spark-submit. Για να το κάνετε αυτό τρέξτε τον παρακάτω κώδικα. Μην ξεχάσετε να αντικαταστήσετε το όνομα χρήστη (στην προκειμένη περίπτωση **<username>**) με το δικό σας όνομα χρήστη.
+Για να μην χρειάζεται να γράφετε όλες αυτές τις παραμέτρους κάθε φορά που εκτελείτε εργασίες spark, μπορείτε να τις εισάγετε σε ένα αρχείο ρυθμίσεων από όπου το spark θα τις αντλεί κάθε φορά που εκτελείτε την εντολή spark-submit. Για να το κάνετε αυτό τρέξτε τον παρακάτω κώδικα. Μην ξεχάσετε να αντικαταστήσετε το όνομα χρήστη (στην προκειμένη περίπτωση ==username==) με το δικό σας όνομα χρήστη.
 
 ```bash
+# ⚠️  αντικατέστησε 👇 το testuser με το δικό σου username
+USERNAME=testuser
 cat > ~/spark-3.5.5-bin-hadoop3/conf/spark-defaults.conf <<EOF
 spark.master k8s://https://10.42.0.1:6443
 spark.submit.deployMode cluster
 spark.hadoop.fs.permissions.umask-mode 000
 spark.kubernetes.authenticate.driver.serviceAccountName spark
-spark.kubernetes.namespace <username>-priv
+spark.kubernetes.namespace $USERNAME-priv
 spark.executor.instances 5
 spark.executor.memory 1500m
 spark.driver.memory 512m
 spark.kubernetes.container.image=apache/spark
 spark.kubernetes.submission.waitAppCompletion false
 spark.eventLog.enabled true
-spark.eventLog.dir hdfs://hdfs-namenode:9000/user/<username>/logs
-spark.history.fs.logDirectory hdfs://hdfs-namenode:9000/user/<username>/logs
+spark.eventLog.dir hdfs://hdfs-namenode:9000/user/$USERNAME/logs
+spark.history.fs.logDirectory hdfs://hdfs-namenode:9000/user/$USERNAME/logs
 EOF
 ```
 
-Τώρα μπορείτε να τρέξετε την προηγούμενη εντολή εκτελώντας απλά
+Τώρα μπορείτε να τρέξετε την προηγούμενη εντολή εκτελώντας απλά (αφού αντικαταστήσετε το `testuser` με το δικό σας username)
 
 ```bash
-spark-submit hdfs://hdfs-namenode:9000/user/<username>/wordcount_localdir.py
+spark-submit hdfs://hdfs-namenode:9000/user/testuser/wordcount_localdir.py
 ```
 
 ## Παρακολούθηση Εκτέλεσης μέσω k9s
