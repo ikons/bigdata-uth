@@ -184,8 +184,8 @@ tar -xzf hadoop-3.4.1.tar.gz
 export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 export SPARK_HOME=$HOME/spark-3.5.5-bin-hadoop3
 export PATH=$HOME/spark-3.5.5-bin-hadoop3/bin:$HOME/hadoop-3.4.1/bin:$PATH
-# ⚠️ Αντικατέστησε 👇 το ikons με το δικό σου username
-export HADOOP_USER_NAME=ikons
+# ⚠️ Αντικατέστησε 👇 το iusername με το δικό σου username
+export HADOOP_USER_NAME=username
 ```
 
 
