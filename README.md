@@ -7,7 +7,7 @@
 ## 📘 Σειρά Μελέτης / Οδηγίες Εκτέλεσης (Markdown)
 
 1. [00_Preparatory-lab](docs/00_Preparatory-lab): Προετοιμασία περιβάλλοντος (WSL + Docker Desktop)
-2. [`00_pycharm`](docs/00_pycharm): Εκτέλεση Spark τοπικά με PyCharm
+2. [00_pycharm](docs/00_pycharm): Εκτέλεση Spark τοπικά με PyCharm
 3. [01_lab1-docker](docs/01_lab1-docker): Εκκίνηση Spark + HDFS μέσω Docker Compose
 4. [01_lab1-k8s](docs/01_lab1-k8s): Εκτέλεση Spark Jobs σε Kubernetes (vdcloud)
 5. [02_lab2](docs/02_lab2): Εκτέλεση ερωτημάτων συνένωσης με χρήση RDD,  DataFrames και SQL
