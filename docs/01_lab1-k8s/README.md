@@ -301,17 +301,17 @@ spark-submit \
     --name wordcount \
     --conf spark.hadoop.fs.permissions.umask-mode=000 \
     --conf spark.kubernetes.authenticate.driver.serviceAccountName=spark \
-    --conf spark.kubernetes.namespace=username-priv \
+    --conf spark.kubernetes.namespace=testuser-priv \
     --conf spark.executor.instances=5 \
     --conf spark.kubernetes.container.image=apache/spark \
     --conf spark.kubernetes.submission.waitAppCompletion=false \
     --conf spark.eventLog.enabled=true \
-    --conf spark.eventLog.dir=hdfs://hdfs-namenode:9000/user/username/logs \
-    --conf spark.history.fs.logDirectory=hdfs://hdfs-namenode:9000/user/username/logs \
-    hdfs://hdfs-namenode:9000/user/username/wordcount_localdir.py
+    --conf spark.eventLog.dir=hdfs://hdfs-namenode:9000/user/testuser/logs \
+    --conf spark.history.fs.logDirectory=hdfs://hdfs-namenode:9000/user/testuser/logs \
+    hdfs://hdfs-namenode:9000/user/testuser/wordcount_localdir.py
 ```
 
-Αλλάξτε το **username** με το όνομα χρήστη που λάβατε στο email, για παράδειγμα εγώ είμαι **ikons**.
+Αλλάξτε το **testuser** με το όνομα χρήστη που λάβατε στο email, για παράδειγμα εγώ είμαι **ikons**.
 
 Αυτή η εντολή spark-submit χρησιμοποιείται για να υποβληθεί μια εργασία Spark σε ένα Kubernetes cluster. Παρακάτω εξηγούνται οι παράμετροι της:
 
