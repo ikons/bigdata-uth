@@ -208,7 +208,7 @@ lambda x: x.split(" ")
 Για να εκτελέσετε το αρχείο `RddQ1.py`, χρησιμοποιήστε την εξής εντολή:
 
 ```bash
-# ⚠️ Αντικατέστησε το "ikons" 👇 με το δικό σου username
+# ⚠️ Αντικατέστησε το "ikons" με το δικό σου 👇 username
 spark-submit hdfs://hdfs-namenode:9000/user/ikons/code/RddQ1.py
 ```
 
@@ -287,7 +287,7 @@ sorted_employees.coalesce(1).saveAsTextFile(output_dir)
 Για να εκτελέσετε το πρόγραμμα `RddQ2.py`, χρησιμοποιήστε την εξής εντολή:
 
 ```bash
-# ⚠️ Αντικατέστησε το "ikons" 👇 με το δικό σου username
+# ⚠️ Αντικατέστησε το "ikons" με το δικό σου 👇 username
 spark-submit hdfs://hdfs-namenode:9000/user/ikons/code/RddQ2.py
 ```
 
@@ -579,7 +579,7 @@ def arrange(seq):
 Για να εκτελέσετε το πρόγραμμα **DFQ1.py**, χρησιμοποιήστε την παρακάτω εντολή:
 
 ```bash
-# ⚠️ Αντικατέστησε το "ikons" 👇 με το δικό σου username
+# ⚠️ Αντικατέστησε το "ikons" με το δικό σου 👇 username
 spark-submit hdfs://hdfs-namenode:9000/user/ikons/code/DFQ1.py
 ```
 
@@ -749,7 +749,7 @@ spark.sql(query)
 Για να εκτελέσετε το πρόγραμμα `DFQ2_noI.py`, χρησιμοποιήστε την εξής εντολή:
 
 ```python
-# ⚠️ Αντικατέστησε 👇 το "ikons" με το δικό σου username
+# ⚠️ Αντικατέστησε το "ikons" με το δικό σου 👇 username
 spark-submit hdfs://hdfs-namenode:9000/user/ikons/code/DFQ2_noI.py
 ```
 
@@ -826,7 +826,7 @@ joined_data.coalesce(1).write.format("csv").option("header", "false").save(outpu
 Μπορούμε να εκτελέσουμε **ενώσεις (join)** στα δεδομένα χρησιμοποιώντας **μόνο τις ενσωματωμένες συναρτήσεις των DataFrames**. Για παράδειγμα, για να υπολογίσουμε το **άθροισμα των μισθών ανά τμήμα**, μπορούμε να δημιουργήσουμε το παρακάτω πρόγραμμα. Για να εκτελέσετε το πρόγραμμα **DF3.py**, χρησιμοποιήστε την εξής εντολή:
 
 ```bash
-# ⚠️ Αντικατέστησε το "ikons" 👇 με το δικό σου username
+# ⚠️ Αντικατέστησε το "ikons" με το δικό σου 👇 username
 spark-submit hdfs://hdfs-namenode:9000/user/ikons/code/DF3.py
 ```
 
