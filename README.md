@@ -33,7 +33,7 @@
 
 ## 💻 Εκτέλεση με PyCharm (Τοπική Ανάπτυξη)
 
-📄 Οδηγός: [`0_pycharm_spark_implementation.docx`](./odigoi/0_pycharm_spark_implementation.docx)
+📄 Οδηγός: [`00_Preparatory-lab`](docs/00_Preparatory-lab)
 
 - Χρήση `venv`, εγκατάσταση `pyspark` & `psutil`
 - Ρύθμιση μεταβλητών περιβάλλοντος στο Run Configuration
