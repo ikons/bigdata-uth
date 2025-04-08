@@ -10,7 +10,7 @@
 2. [`0_pycharm_spark_implementation.docx`](./odigoi/0_pycharm_spark_implementation.docx): Εκτέλεση Spark τοπικά με PyCharm
 3. [01_lab1-docker](docs/01_lab1-docker/): Εκκίνηση Spark + HDFS μέσω Docker Compose
 4. [01_lab1-k8s](docs/01_lab1-k8s): Εκτέλεση Spark Jobs σε Kubernetes (vdcloud)
-5. [`02_lab2.docx`](./odigoi/02_lab2.docx): Εκτέλεση ερωτημάτων συνένωσης με χρήση RDD και DataFrames
+5. [02_lab2](docs/02_lab2): Εκτέλεση ερωτημάτων συνένωσης με χρήση RDD και DataFrames
 
 ---
 
@@ -21,6 +21,7 @@
 - `docker/`
   - `01-lab1-spark-hdfs/`: Spark + HDFS setup με Docker Compose
   - `02-lab2-spark-history-server/`: Spark History Server setup με Docker
+- `docs/': Όλοι οι οδηγοί σε μορφή Markdown (HTML)
 - `odigoi/`: Όλοι οι οδηγοί σε μορφή `.docx` ή `.pdf`
 - `README.md`: Οδηγίες χρήσης και εκτέλεσης
 
