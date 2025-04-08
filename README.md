@@ -4,13 +4,17 @@
 
 ---
 
-## 📘 Σειρά Μελέτης / Εκτέλεσης Οδηγιών
+## 📘 Σειρά Μελέτης / Οδηγίες Εκτέλεσης (Markdown)
 
 1. [00_Preparatory-lab](docs/00_Preparatory-lab/): Προετοιμασία περιβάλλοντος (WSL + Docker Desktop)
 2. [`0_pycharm_spark_implementation.docx`](./odigoi/0_pycharm_spark_implementation.docx): Εκτέλεση Spark τοπικά με PyCharm
 3. [01_lab1-docker](docs/01_lab1-docker/): Εκκίνηση Spark + HDFS μέσω Docker Compose
 4. [01_lab1-k8s](docs/01_lab1-k8s): Εκτέλεση Spark Jobs σε Kubernetes (vdcloud)
-5. [02_lab2](docs/02_lab2): Εκτέλεση ερωτημάτων συνένωσης με χρήση RDD και DataFrames
+5. [02_lab2](docs/02_lab2): Εκτέλεση ερωτημάτων συνένωσης με χρήση RDD,  DataFrames και SQL
+
+
+📁 Εναλλακτικά, όλοι οι οδηγοί είναι διαθέσιμοι και στον φάκελο [`odigoi/`](./odigoi) σε μορφή `.docx` και `.pdf`.
+
 
 ---
 
@@ -21,9 +25,8 @@
 - `docker/`
   - `01-lab1-spark-hdfs/`: Spark + HDFS setup με Docker Compose
   - `02-lab2-spark-history-server/`: Spark History Server setup με Docker
-- `docs/': Όλοι οι οδηγοί σε μορφή Markdown (HTML)
-- `odigoi/`: Όλοι οι οδηγοί σε μορφή `.docx` ή `.pdf`
-- `README.md`: Οδηγίες χρήσης και εκτέλεσης
+- `docs/': 📘 Όλοι οι οδηγοί σε μορφή Markdown
+- `odigoi/`: 🧾 Οδηγοί σε `.docx` και `.pdf`
 
 ---
 
@@ -41,7 +44,7 @@
 
 ## 🧱 Προετοιμασία Περιβάλλοντος (WSL + Docker Desktop)
 
-📄 Οδηγός: [`0_Preparatory_lab_Docker_Desktop-wsl.pdf`](./odigoi/0_Preparatory_lab_Docker_Desktop-wsl.pdf)
+📄 Οδηγός: [`docs/00_Preparatory-lab`](docs/00_Preparatory-lab/)
 
 - Εγκατάσταση WSL 2 και Ubuntu
 - Ρύθμιση Docker Desktop για χρήση WSL backend
@@ -51,7 +54,7 @@
 
 ## 🐳 Lab 01a: Εκτέλεση Spark + HDFS μέσω Docker
 
-📄 Οδηγός: [`01_lab1-docker.docx`](./odigoi/01_lab1-docker.docx)
+📄 Οδηγός: [`01_lab1-docker`](docs/01_lab1-docker)
 
 ```bash
 cd docker/01-lab1-spark-hdfs
@@ -74,7 +77,7 @@ docker exec spark-master spark-submit /mnt/upload/wordcount.py
 
 ## ☁️ Lab 01b: Spark σε Kubernetes
 
-📄 Οδηγός: [`01_lab1-k8s.docx`](./odigoi/01_lab1-k8s.docx)
+📄 Οδηγός: [`01_lab1-k8s`](docs/01_lab1-k8s)
 
 - Εκτελεί Spark σε Kubernetes (vdcloud)
 - Απαιτεί OpenVPN & χρήση `k9s` για παρακολούθηση
@@ -89,7 +92,7 @@ spark-submit   --master k8s://https://<k8s-cluster-endpoint>   --deploy-mode clu
 
 ## 🔁 Lab 02: Εκτέλεση ερωτημάτων συνένωσης με την χρήση RDD και DataFrames
 
-📄 Οδηγός: [`02_lab2.docx`](./odigoi/02_lab2.docx)
+📄 Οδηγός: [`02_lab2`](docs/02_lab2)
 
 Σε αυτό το εργαστήριο υλοποιούνται ερωτήματα συνένωσης πινάκων (joins) τόσο με RDDs όσο και με DataFrames. Περιλαμβάνει την ταξινόμηση και την ομαδοποίηση αποτελεσμάτων, καθώς και χρήση SQL queries.
 
@@ -120,26 +123,18 @@ hadoop fs -ls code
 | Query 3       | Άθροισμα μισθών ανά τμήμα                   | DF         |
 | Word Count    | Καταμέτρηση λέξεων σε αρχείο κειμένου       | RDD        |
 
-📈 Τα παραπάνω queries μπορούν να παρακολουθηθούν μέσω του Spark History Server (αναφορά στο τέλος του Lab 02).
+📈 Τα παραπάνω queries μπορούν να παρακολουθηθούν μέσω του Spark History Server (αναφορά στο τέλος του [02_lab2](docs/02_lab2)).
 
 ### Παράδειγμα εκτέλεσης:
 
 ```bash
-spark-submit hdfs://hdfs-namenode:9000/user/<user>/code/RddQ1.py
+# ⚠️ Αντικατέστησε 👇 το "ikons" με το δικό σου username
+spark-submit hdfs://hdfs-namenode:9000/user/ikons/code/RddQ1.py
 ```
 
 ---
 
 
-
-
-## 📄 Αρχεία Οδηγιών
-
-- [0_Preparatory_lab_Docker_Desktop-wsl.pdf](./odigoi/0_Preparatory_lab_Docker_Desktop-wsl.pdf)
-- [0_pycharm_spark_implementation.docx](./odigoi/0_pycharm_spark_implementation.docx)
-- [01_lab1-docker.docx](./odigoi/01_lab1-docker.docx)
-- [01_lab1-k8s.docx](./odigoi/01_lab1-k8s.docx)
-- [02_lab2.docx](./odigoi/02_lab2.docx)
 
 ---
 
