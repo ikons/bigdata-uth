@@ -84,7 +84,11 @@ docker exec spark-master spark-submit /mnt/upload/wordcount.py
 ### Παράδειγμα `spark-submit`:
 
 ```bash
-spark-submit   --master k8s://https://<k8s-cluster-endpoint>   --deploy-mode cluster   --conf spark.kubernetes.container.image=<spark-image>   hdfs://.../wordcount_localdir.py
+spark-submit \
+    --master k8s://https://<k8s-cluster-endpoint> \
+    --deploy-mode cluster \
+    --conf spark.kubernetes.container.image=apache/spark \
+    hdfs://.../wordcount_localdir.py
 ```
 
 ---
