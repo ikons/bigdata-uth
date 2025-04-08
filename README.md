@@ -131,7 +131,7 @@ hadoop fs -ls code
 ### Παράδειγμα εκτέλεσης:
 
 ```bash
-# ⚠️ Αντικατέστησε 👇 το "ikons" με το δικό σου username
+# ⚠️ Αντικατέστησε το "ikons" με το δικό σου 👇 username
 spark-submit hdfs://hdfs-namenode:9000/user/ikons/code/RddQ1.py
 ```
 
