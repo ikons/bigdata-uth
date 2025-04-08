@@ -648,7 +648,7 @@ sorted_employees_df.coalesce(1).write.format("csv").option("header", "false").sa
 Για να εκτελέσετε το πρόγραμμα **DFQ2.py**, χρησιμοποιήστε την παρακάτω εντολή:
 
 ```bash
-# ⚠️ Αντικατέστησε το "ikons" με το δικό σου username
+# ⚠️ Αντικατέστησε το "ikons" 👇 με το δικό σου username
 spark-submit hdfs://hdfs-namenode:9000/user/ikons/code/DFQ2.py
 ```
 
@@ -658,7 +658,7 @@ DFQ2.py:
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructField, StructType, IntegerType, FloatType, StringType
 
-# ⚠️ Αντικατέστησε το "ikons" με το δικό σου username
+# ⚠️ Αντικατέστησε 👇 το "ikons" με το δικό σου username
 username = "ikons"
 spark = SparkSession \
     .builder \
