@@ -649,7 +649,7 @@ sorted_employees_df.coalesce(1).write.format("csv").option("header", "false").sa
 
 ```bash
 # ⚠️ Αντικατέστησε το "ikons" με το δικό σου username
-spark-submit hdfs://hdfs-namenode:9000/user/==ikons==/code/DFQ2.py
+spark-submit hdfs://hdfs-namenode:9000/user/ikons/code/DFQ2.py
 ```
 
 DFQ2.py:
