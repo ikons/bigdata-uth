@@ -62,16 +62,18 @@ hadoop fs -ls code
 Για να εκτελέσεις το πρόγραμμα **wordcount.py**, χρησιμοποίησε την εξής εντολή:
 
 ```bash
-spark-submit hdfs://hdfs-namenode:9000/user/==ikons==/code/wordcount.py
+# ⚠️ Αντικατέστησε το "ikons" με το δικό σου username
+spark-submit hdfs://hdfs-namenode:9000/user/ikons/code/wordcount.py
 ```
 
-Μετά την εκτέλεση, **τρέξε ** k9s και παρακολούθησε το job που εκτελείται στο **k8s (Kubernetes)**.
+Μετά την εκτέλεση, **τρέξε** k9s και παρακολούθησε το job που εκτελείται στο **k8s (Kubernetes)**.
 
 Wordcount.py:
 
 ```python
 from pyspark.sql import SparkSession
-username = =="ikons"==
+# ⚠️ Αντικατέστησε το "ikons" με το δικό σου username
+username = "ikons"
 sc = SparkSession \
     .builder \
     .appName("wordcount example") \
@@ -162,7 +164,9 @@ lambda x: x.split(" ")
 
 **Δομή:**
 
+----
 | ID | ΟΝΟΜΑ | ΜΙΣΘΟΣ | ΤΜΗΜΑ_ID | 
+----
 
 π.χ. `1,George R,2000,1`
 
@@ -171,9 +175,11 @@ lambda x: x.split(" ")
 
 **Δομή:**
 
+----
 | ID | ΟΝΟΜΑ | 
+----
 
-π.χ. 1,Dep A
+π.χ. `1,Dep A`
 
 **ΕΡΩΤΗΜΑ 1:** Βρες τους 5 υπαλλήλους με τον χαμηλότερο μισθό
 
@@ -188,7 +194,8 @@ lambda x: x.split(" ")
 Για να εκτελέσετε το αρχείο `RddQ1.py`, χρησιμοποιήστε την εξής εντολή:
 
 ```bash
-spark-submit hdfs://hdfs-namenode:9000/user/==ikons==/code/RddQ1.py
+# ⚠️ Αντικατέστησε το "ikons" με το δικό σου username
+spark-submit hdfs://hdfs-namenode:9000/user/ikons/code/RddQ1.py
 ```
 
 RddQ1.py:
@@ -196,7 +203,8 @@ RddQ1.py:
 ```python
 from pyspark.sql import SparkSession
 
-username = =="ikons"==
+# ⚠️ Αντικατέστησε το "ikons" με το δικό σου username
+username = "ikons"
 sc = SparkSession \
     .builder \
     .appName("RDD query 1 execution") \
@@ -265,7 +273,8 @@ sorted_employees.coalesce(1).saveAsTextFile(output_dir)
 Για να εκτελέσετε το πρόγραμμα `RddQ2.py`, χρησιμοποιήστε την εξής εντολή:
 
 ```bash
-spark-submit hdfs://hdfs-namenode:9000/user/==ikons==/code/RddQ2.py
+# ⚠️ Αντικατέστησε το "ikons" με το δικό σου username
+spark-submit hdfs://hdfs-namenode:9000/user/ikons/code/RddQ2.py
 ```
 
 RddQ2.py:
@@ -273,7 +282,8 @@ RddQ2.py:
 ```python
 from pyspark.sql import SparkSession
 
-username = =="ikons"==
+# ⚠️ Αντικατέστησε το "ikons" με το δικό σου username
+username = "ikons"
 sc = SparkSession \
     .builder \
     .appName("RDD query 2 execution") \
@@ -416,7 +426,7 @@ final_rdd.coalesce(1).saveAsTextFile(output_dir)
 
 **Dataset A**
 
-```
+```python
 (1, George K, 1)
 (2, John T, 2)
 (3, Mary M, 1)
@@ -425,7 +435,7 @@ final_rdd.coalesce(1).saveAsTextFile(output_dir)
 
 **Dataset B**
 
-```
+```python
 (1, Dep A)
 (2, Dep B)
 (3, Dep C)
@@ -492,7 +502,7 @@ unioned_data = left.union(right)
 
 Αποτέλεσμα:
 
-```
+```python
 (1, (1, (1, George K, 1)))
 (2, (1, (2, John T, 2)))
 (1, (1, (3, Mary M, 1)))
@@ -504,7 +514,7 @@ unioned_data = left.union(right)
 
 Ομαδοποιούμε τα δεδομένα με [`groupByKey()`](  https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.RDD.groupByKey.html), ώστε εγγραφές με ίδιο `key` να βρεθούν στον ίδιο reducer:
 
-```
+```python
 (1, [(1, (1, George K, 1)), (1, (3, Mary M, 1)), (2, (1, Dep A))])
 (2, [(1, (2, John T, 2)), (2, (2, Dep B))])
 (3, [(1, (4, Jerry S, 3)), (2, (3, Dep C))])
@@ -526,7 +536,7 @@ def arrange(seq):
 
 Εφαρμόζουμε `flatMapValues(lambda x: arrange(x))`
 
-```
+```python
 [
  (3, (4, Jerry S, 3), (3, Dep C)),
  (1, (1, George K, 1), (1, Dep A)),
@@ -555,7 +565,8 @@ def arrange(seq):
 Για να εκτελέσετε το πρόγραμμα **DFQ1.py**, χρησιμοποιήστε την παρακάτω εντολή:
 
 ```bash
-spark-submit hdfs://hdfs-namenode:9000/user/==ikons==/code/DFQ1.py
+# ⚠️ Αντικατέστησε το "ikons" με το δικό σου username
+spark-submit hdfs://hdfs-namenode:9000/user/ikons/code/DFQ1.py
 ```
 
 DFQ1.py:
@@ -565,6 +576,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.types import StructField, StructType, IntegerType, FloatType, StringType
 from pyspark.sql.functions import col
 
+# ⚠️ Αντικατέστησε το "ikons" με το δικό σου username
 username = "ikons"
 spark = SparkSession \
     .builder \
@@ -606,6 +618,7 @@ sorted_employees_df.coalesce(1).write.format("csv").option("header", "false").sa
 
 Παράδειγμα εξόδου:
 
+```
 +---+---------+--------+-------+
 | id|    name | salary |dep_id|
 +---+---------+--------+-------+
@@ -615,12 +628,13 @@ sorted_employees_df.coalesce(1).write.format("csv").option("header", "false").sa
 | 5 | Helen K | 1050.0 |   2   |
 |10 |Yiannis T| 1500.0 |   1   |
 +---+---------+--------+-------+
-
+```
 Για το ερώτημα 2:
 
 Για να εκτελέσετε το πρόγραμμα **DFQ2.py**, χρησιμοποιήστε την παρακάτω εντολή:
 
 ```bash
+# ⚠️ Αντικατέστησε το "ikons" με το δικό σου username
 spark-submit hdfs://hdfs-namenode:9000/user/==ikons==/code/DFQ2.py
 ```
 
@@ -630,6 +644,7 @@ DFQ2.py:
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructField, StructType, IntegerType, FloatType, StringType
 
+# ⚠️ Αντικατέστησε το "ikons" με το δικό σου username
 username = "ikons"
 spark = SparkSession \
     .builder \
@@ -703,6 +718,7 @@ spark.sql(query)
 
 **Παράδειγμα εξόδου:**
 
+```
 +---------+------+
 |     name|salary|
 +---------+------+
@@ -712,13 +728,15 @@ spark.sql(query)
 |Yiannis T|1500.0|
 | Marios K|1000.0|
 +---------+------+
+```
 
 Υπάρχει και μία **εναλλακτική εκτέλεση του Ερωτήματος 2** με χρήση **DataFrames**, η οποία **δεν χρησιμοποιεί ενδιάμεσο πίνακα**:
 
 Για να εκτελέσετε το πρόγραμμα `DFQ2_noI.py`, χρησιμοποιήστε την εξής εντολή:
 
 ```python
-spark-submit hdfs://hdfs-namenode:9000/user/==username==/code/DFQ2_noI.py
+# ⚠️ Αντικατέστησε το "ikons" με το δικό σου username
+spark-submit hdfs://hdfs-namenode:9000/user/ikons/code/DFQ2_noI.py
 ```
 
 DFQ2_noI.py:
@@ -727,7 +745,8 @@ DFQ2_noI.py:
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructField, StructType, IntegerType, FloatType, StringType
 
-username = "username"
+# ⚠️ Αντικατέστησε το "ikons" με το δικό σου username
+username = "ikons"
 spark = SparkSession \
     .builder \
     .appName("DF query 2 execution, no Intermediate Table") \
@@ -793,7 +812,8 @@ joined_data.coalesce(1).write.format("csv").option("header", "false").save(outpu
 Μπορούμε να εκτελέσουμε **ενώσεις (join)** στα δεδομένα χρησιμοποιώντας **μόνο τις ενσωματωμένες συναρτήσεις των DataFrames**. Για παράδειγμα, για να υπολογίσουμε το **άθροισμα των μισθών ανά τμήμα**, μπορούμε να δημιουργήσουμε το παρακάτω πρόγραμμα. Για να εκτελέσετε το πρόγραμμα **DF3.py**, χρησιμοποιήστε την εξής εντολή:
 
 ```bash
-spark-submit hdfs://hdfs-namenode:9000/user/==ikons==/code/DF3.py
+# ⚠️ Αντικατέστησε το "ikons" με το δικό σου username
+spark-submit hdfs://hdfs-namenode:9000/user/ikons/code/DF3.py
 ```
 
 DF3.py:
@@ -802,6 +822,7 @@ DF3.py:
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructField, StructType, IntegerType, FloatType, StringType
 
+# ⚠️ Αντικατέστησε το "ikons" με το δικό σου username
 username = "ikons"
 spark = SparkSession \
     .builder \
@@ -865,6 +886,7 @@ groupedDf.coalesce(1).write.format("csv").option("header", "false").save(f"{outp
 
 Έπειτα, κάνουμε **[ομαδοποίηση (`groupBy`)](  https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.RDD.groupBy.html)** των εγγραφών με βάση την τιμή του `dep_id`, και χρησιμοποιούμε τη συνάρτηση **`[sum()](  https://spark.apache.org/docs/latest/api/python/reference/pyspark.pandas/api/pyspark.pandas.DataFrame.sum.html)`** για να υπολογίσουμε το **άθροισμα των μισθών** σε κάθε τμήμα. Τέλος, εκτυπώνουμε τα δεδομένα.
 
+```
 +------+----------+------+------+---+--------+
 |emp_id|  emp_name|salary|dep_id| id|dpt_name|
 +------+----------+------+------+---+--------+
@@ -888,6 +910,7 @@ groupedDf.coalesce(1).write.format("csv").option("header", "false").save(f"{outp
 |     3|     4050.0|
 |     2|     7050.0|
 +------+-----------+
+```
 
 ## Εγκατάσταση Spark History Server για προβολή ιστορικών εκτελέσεων
 
@@ -905,12 +928,14 @@ docker build -t spark-history-server .
 
 με αυτό τον τρόπο κατασκευάζετε μια προσαρμοσμένη εικόνα Docker. 
 
-2. Εκκίνηση του κοντέινερ ορίζοντας το **όνομα χρήστη (αλλάξτε το κόκκινο με το δικό σας)**
+2. Εκκίνηση του κοντέινερ ορίζοντας το **όνομα χρήστη (αλλάξτε το ikons με το δικό σου username)**
 
 ```bash
+# ⚠️ Αντικατέστησε το "ikons" με το δικό σου username
+
 docker run -d \
   --name spark-history-server \
-  -e USERNAME===username== \
+  -e USERNAME=ikons \
   -p 18080:18080 \
   spark-history-server
 ```
