@@ -6,12 +6,11 @@
 
 ## 📘 Σειρά Μελέτης / Οδηγίες Εκτέλεσης (Markdown)
 
-1. [00_Preparatory-lab](docs/00_Preparatory-lab/): Προετοιμασία περιβάλλοντος (WSL + Docker Desktop)
-2. [`0_pycharm_spark_implementation.docx`](./odigoi/0_pycharm_spark_implementation.docx): Εκτέλεση Spark τοπικά με PyCharm
-3. [01_lab1-docker](docs/01_lab1-docker/): Εκκίνηση Spark + HDFS μέσω Docker Compose
+1. [00_Preparatory-lab](docs/00_Preparatory-lab): Προετοιμασία περιβάλλοντος (WSL + Docker Desktop)
+2. [`00_pycharm`](docs/00_pycharm): Εκτέλεση Spark τοπικά με PyCharm
+3. [01_lab1-docker](docs/01_lab1-docker): Εκκίνηση Spark + HDFS μέσω Docker Compose
 4. [01_lab1-k8s](docs/01_lab1-k8s): Εκτέλεση Spark Jobs σε Kubernetes (vdcloud)
 5. [02_lab2](docs/02_lab2): Εκτέλεση ερωτημάτων συνένωσης με χρήση RDD,  DataFrames και SQL
-
 
 📁 Εναλλακτικά, όλοι οι οδηγοί είναι διαθέσιμοι και στον φάκελο [`odigoi/`](./odigoi) σε μορφή `.docx` και `.pdf`.
 
@@ -90,7 +89,7 @@ spark-submit   --master k8s://https://<k8s-cluster-endpoint>   --deploy-mode clu
 
 ---
 
-## 🔁 Lab 02: Εκτέλεση ερωτημάτων συνένωσης με την χρήση RDD και DataFrames
+## 🔁 Lab 02: Εκτέλεση ερωτημάτων συνένωσης με την χρήση RDD, DataFrames και SQL
 
 📄 Οδηγός: [`02_lab2`](docs/02_lab2)
 
