@@ -237,7 +237,7 @@ from pyspark import SparkContext  # Εισαγωγή της κλάσης SparkCo
 sc = SparkContext(appName="WordCount")
 
 # Ορισμός εισόδου - αρχείο στο HDFS 
-# ⚠️ Αντικατέστησε 👇 το testuser με το δικό σου username
+# ⚠️ Αντικατέστησε το testuser με το δικό σου 👇 username
 input_dir = "hdfs://hdfs-namenode:9000/user/testuser/text.txt"
 
 # Απόκτηση του μοναδικού ID της εφαρμογής Spark
