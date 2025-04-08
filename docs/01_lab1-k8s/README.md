@@ -320,14 +320,14 @@ spark-submit \
 - `--name wordcount`: Ορίζει το όνομα της εφαρμογής Spark που θα τρέξει στο Kubernetes. Εδώ η εφαρμογή έχει το όνομα `wordcount`.
 - `--conf spark.hadoop.fs.permissions.umask-mode=000`: Ορίζει τα δικαιώματα πρόσβασης του συστήματος αρχείων Hadoop.
 - `--conf spark.kubernetes.authenticate.driver.serviceAccountName=spark`: Ορίζει το όνομα του Kubernetes service account που θα χρησιμοποιηθεί από τον driver. Εδώ, ορίζεται το `spark` ως το service account.
-- `--conf spark.kubernetes.namespace=username-priv`: Ορίζει το namespace του Kubernetes που θα χρησιμοποιηθεί για να τρέξει η εργασία. Εδώ, το namespace είναι το `<username>-priv`.
+- `--conf spark.kubernetes.namespace=testuser-priv`: Ορίζει το namespace του Kubernetes που θα χρησιμοποιηθεί για να τρέξει η εργασία. Εδώ, το namespace είναι το `testuser-priv`.
 - `--conf spark.executor.instances=5`: Ορίζει τον αριθμό των εκτελεστών (executors) που θα δημιουργηθούν για την εκτέλεση της εργασίας. Εδώ, δημιουργούνται 5 εκτελεστές.
 - `--conf spark.kubernetes.container.image=apache/spark`: Ορίζει την εικόνα του container που θα χρησιμοποιηθεί για την εκτέλεση της εργασίας. Εδώ χρησιμοποιείται η εικόνα `apache/spark`.
 - `--conf spark.kubernetes.submission.waitAppCompletion=false` : Καθορίζει αν θα πρέπει να αναμένει την ολοκλήρωση της εφαρμογής πριν τερματιστεί η διαδικασία εκκίνησης. Όταν οριστεί σε `false`, η εργασία Spark ξεκινάει και δεν περιμένει την ολοκλήρωση της εκτέλεσης (fire and forget).
 - `--conf spark.eventLog.enabled=true`: Ενεργοποιεί την καταγραφή των γεγονότων (event logging) της εργασίας Spark. Αυτό επιτρέπει την καταγραφή της εκτέλεσης της εφαρμογής.
-- `--conf spark.eventLog.dir=hdfs://hdfs-namenode:9000/user/username/logs`: Ορίζει τη θέση του καταλόγου όπου θα αποθηκεύονται τα αρχεία καταγραφής των γεγονότων. Εδώ, η καταγραφή θα αποθηκευτεί στο HDFS του hdfs-namenode.
-- `--conf spark.history.fs.logDirectory=hdfs://hdfs-namenode:9000/user/username/logs`: Ορίζει τη θέση όπου θα αποθηκεύονται τα αρχεία καταγραφής του ιστορικού (history logs) της εφαρμογής Spark για να επιτρέπει την παρακολούθηση του ιστορικού εκτέλεσης μέσω του Spark UI.
-- `hdfs://hdfs-namenode:9000/user/username/wordcount_localdir.py`: Ορίζει τη διαδρομή του αρχείου Python που περιέχει τον κώδικα της εφαρμογής. Στην περίπτωση αυτή, το αρχείο `wordcount_localdir.py` βρίσκεται στο HDFS.
+- `--conf spark.eventLog.dir=hdfs://hdfs-namenode:9000/user/testuser/logs`: Ορίζει τη θέση του καταλόγου όπου θα αποθηκεύονται τα αρχεία καταγραφής των γεγονότων. Εδώ, η καταγραφή θα αποθηκευτεί στο HDFS directory `/user/testuser/logs` του hdfs-namenode.
+- `--conf spark.history.fs.logDirectory=hdfs://hdfs-namenode:9000/user/testuser/logs`: Ορίζει τη θέση όπου θα αποθηκεύονται τα αρχεία καταγραφής του ιστορικού (history logs) της εφαρμογής Spark για να επιτρέπει την παρακολούθηση του ιστορικού εκτέλεσης μέσω του Spark UI.
+- `hdfs://hdfs-namenode:9000/user/testuser/wordcount_localdir.py`: Ορίζει τη διαδρομή του αρχείου Python που περιέχει τον κώδικα της εφαρμογής. Στην περίπτωση αυτή, το αρχείο `wordcount_localdir.py` βρίσκεται στο HDFS στον κατάλογο `user/testuser/`.
 
 Όλοι οι παράμετροι που μπορούν να ρυθμιστούν είναι διαθέσιμοι στην παρακάτω σελίδα
 
