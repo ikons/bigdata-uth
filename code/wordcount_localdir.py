@@ -3,9 +3,7 @@ from pyspark import SparkContext
 # Initialize SparkContext
 sc = SparkContext(appName="WordCount")
 
-# Read all files in the HDFS directory
-#input_dir = "hdfs://hdfs-namenode:9000/data/CC-MAIN-20241201162023-20241201192023-00000.warc.wet"
-input_dir = "hdfs://hdfs-namenode:9000/data"
+input_dir = "hdfs://hdfs-namenode:9000/user/ikons/examples/text.txt"
 # Get the application ID (job ID) from the Spark context
 job_id = sc.applicationId
 
