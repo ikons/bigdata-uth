@@ -62,11 +62,8 @@ hadoop fs -put code code
 grep -rn "student1" code/
 ```
 
-Ανεβάζουμε όλα τα αρχεία από τον φάκελο code στο HDFS:
+Βεβαιωθείτε ότι όλα τα αρχεία έχουν ανέβει στο HDFS:
 
-```bash
-hadoop fs -put code code
-```
 
 ```bash
 hadoop fs -ls code
