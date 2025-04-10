@@ -39,8 +39,7 @@ departments = sc.textFile("hdfs://hdfs-namenode:9000/user/ikons/examples/departm
     .map(lambda x: x.split(","))  # → [id, dpt_name]
 
 # Φιλτράρισμα μόνο των τμημάτων με dpt_name == "Dep A"
-depA = departments.map(lambda x: x if (x[1] == "Dep A") else None) \
-    .filter(lambda x: x is not None)
+depA = departments.filter(lambda x: x[1] == "Dep A")
 
 # Μορφοποίηση υπαλλήλων σε (dep_id, [emp_id, emp_name, salary])
 # Χρήση του x[3] = dep_id ως κλειδί
