@@ -34,6 +34,35 @@ hadoop fs -ls examples
 
 Ανέβασμα των αρχείων κώδικα στο HDFS
 
+
+
+
+**Αντικατάσταση του username πριν την αποστολή στο HDFS**: Πριν ανεβάσετε τον φάκελο `code` στο HDFS, εκτελέστε την παρακάτω εντολή για να αντικαταστήσετε το `ikons` που υπάρχει "καρφωτά" στα περισσότερα αρχεία με το δικό σας όνομα χρήστη (π.χ. `student1`):
+
+```bash
+find code -type f -exec sed -i 's/ikons/<το_όνομα_χρήστη_σας>/g' {} +
+```
+
+📌 Παράδειγμα:
+
+```bash
+find code -type f -exec sed -i 's/ikons/student1/g' {} +
+```
+
+Αφού κάνετε την αλλαγή, συνεχίστε με την αποστολή στο HDFS:
+
+```bash
+hadoop fs -put code code
+```
+
+---
+
+💡 **Tip**: Μπορείτε να επιβεβαιώσετε ότι η αλλαγή έγινε σωστά με:
+
+```bash
+grep -rn "student1" code/
+```
+
 Ανεβάζουμε όλα τα αρχεία από τον φάκελο code στο HDFS:
 
 ```bash
@@ -199,6 +228,10 @@ lambda x: x.split(" ")
 
 **ΕΡΩΤΗΜΑ 2**: Βρες τους 3 πιο καλοπληρωμένους υπαλλήλους από το τμήμα `Dep A`
 
+**ΕΡΩΤΗΜΑ 3**: Βρες το ετήσιο εισόδημα όλων των υπαλλήλων
+
+**ΕΡΩΤΗΜΑ 4**: Κάνε συνένωση υπαλλήλων με τμήματα μόνο με την χρήση RDDs
+
 ## RDD (Resilient Distributed Datasets)
 
 Τα **RDDs** αποτελούν τη **θεμελιώδη δομή δεδομένων στο Spark**. Είναι **αμετάβλητες**, κατανεμημένες συλλογές αντικειμένων. Κάθε σύνολο δεδομένων (RDD) χωρίζεται σε **λογικά partitions**, τα οποία μπορούν να επεξεργάζονται σε **διαφορετικούς κόμβους του cluster**. Τα RDDs μπορούν να περιέχουν **οποιονδήποτε τύπο αντικειμένων Python, Java ή Scala**, ακόμα και **κλάσεις που ορίζει ο χρήστης**.
@@ -336,8 +369,7 @@ departments = sc.textFile("hdfs://hdfs-namenode:9000/user/ikons/examples/departm
     .map(lambda x: x.split(","))  # → [id, dpt_name]
 
 # Φιλτράρισμα μόνο των τμημάτων με dpt_name == "Dep A"
-depA = departments.map(lambda x: x if (x[1] == "Dep A") else None) \
-    .filter(lambda x: x is not None)
+depA = departments.filter(lambda x: x[1] == "Dep A")
 
 # Μορφοποίηση υπαλλήλων σε (dep_id, [emp_id, emp_name, salary])
 # Χρήση του x[3] = dep_id ως κλειδί
@@ -436,7 +468,68 @@ final_rdd.coalesce(1).saveAsTextFile(output_dir)
 (1000, ['7', 'Marios K'])
 ```
 
-**Παράδειγμα Hands-On: Ένωση δύο συνόλων δεδομένων χρησιμοποιώντας RDDs (μόνο με Map/Reduce jobs):**
+
+Αυτή είναι μια υλοποίηση με RDD για το ερώτημα 3:
+Για να εκτελέσετε το πρόγραμμα `RddQ3.py`, χρησιμοποιήστε την εξής εντολή:
+
+```bash
+# ⚠️ Αντικατέστησε το "ikons" με το δικό σου 👇 username
+spark-submit hdfs://hdfs-namenode:9000/user/ikons/code/RddQ3.py
+```
+
+RddQ3.py:
+
+```python
+from pyspark.sql import SparkSession
+
+# ⚠️ Αντικατέστησε 👇 το "ikons" με το δικό σου username
+username = "ikons"
+sc = SparkSession \
+    .builder \
+    .appName("RDD query 3 execution") \
+    .getOrCreate() \
+    .sparkContext
+
+# ΕΛΑΧΙΣΤΟΠΟΙΗΣΗ ΕΞΟΔΩΝ ΚΑΤΑΓΡΑΦΗΣ (LOGGING)
+sc.setLogLevel("ERROR")
+
+# Λήψη του job ID και καθορισμός της διαδρομής εξόδου
+job_id = sc.applicationId
+output_dir = f"hdfs://hdfs-namenode:9000/user/{username}/RddQ3_{job_id}"
+
+# =======================
+# ΠΛΗΡΟΦΟΡΙΕΣ ΣΧΗΜΑΤΟΣ:
+# employees:   "emp_id", "emp_name", "salary", "dep_id"
+# departments: "id", "dpt_name"
+#
+# Αντιστοίχιση θέσεων για employees:
+#   x[0] = emp_id
+#   x[1] = emp_name
+#   x[2] = salary
+#   x[3] = dep_id
+#
+# Αντιστοίχιση θέσεων για departments:
+#   x[0] = id
+#   x[1] = dpt_name
+# =======================
+
+# Φόρτωση και ανάλυση των δεδομένων υπαλλήλων
+employees = sc.textFile("hdfs://hdfs-namenode:9000/user/ikons/examples/employees.csv") \
+    .map(lambda x: x.split(","))  # → [emp_id, emp_name, salary, dep_id]
+# Κατευθείαν υπολογισμός των ετήσιων εισοδημάτων χρησιμοποιώντας lambda function:
+employees_yearly_income = employees \
+    .map (lambda x: [x[1]), 14*(int(x[2]))]) # → [emp_name, 14*salary]
+# Εμφάνιση της τελικής εξόδου (για δοκιμή/debugging)
+for item in employees_yearly_income.coalesce(1).collect():
+    print(item)
+# Αποθήκευση της τελικής εξόδου στο HDFS
+employees_yearly_income.coalesce(1).saveAsTextFile(output_dir)
+
+```
+
+
+
+**RddQ4 Παράδειγμα Hands-On: Ένωση δύο συνόλων δεδομένων χρησιμοποιώντας RDDs (μόνο με Map/Reduce jobs):**
 
 **Dataset A**
 
@@ -559,63 +652,110 @@ def arrange(seq):
 ]
 ```
 
-Αυτή είναι μια υλοποίηση με RDD για το ερώτημα 3:
-Για να εκτελέσετε το πρόγραμμα `RddQ3.py`, χρησιμοποιήστε την εξής εντολή:
 
-```bash
-# ⚠️ Αντικατέστησε το "ikons" με το δικό σου 👇 username
-spark-submit hdfs://hdfs-namenode:9000/user/ikons/code/RddQ3.py
-```
+Ο κώδικας σε python του παραδείγματος είναι ο ακόλουθος
 
-RddQ3.py:
+RddQ4.py
 
 ```python
 from pyspark.sql import SparkSession
 
-# ⚠️ Αντικατέστησε 👇 το "ikons" με το δικό σου username
-username = "ikons"
+# Δημιουργία SparkContext
+
 sc = SparkSession \
     .builder \
-    .appName("RDD query 3 execution") \
+    .appName("Join Datasets with RDD") \
     .getOrCreate() \
     .sparkContext
 
 # ΕΛΑΧΙΣΤΟΠΟΙΗΣΗ ΕΞΟΔΩΝ ΚΑΤΑΓΡΑΦΗΣ (LOGGING)
 sc.setLogLevel("ERROR")
 
-# Λήψη του job ID και καθορισμός της διαδρομής εξόδου
-job_id = sc.applicationId
-output_dir = f"hdfs://hdfs-namenode:9000/user/{username}/RddQ3_{job_id}"
 
-# =======================
-# ΠΛΗΡΟΦΟΡΙΕΣ ΣΧΗΜΑΤΟΣ:
-# employees:   "emp_id", "emp_name", "salary", "dep_id"
-# departments: "id", "dpt_name"
-#
-# Αντιστοίχιση θέσεων για employees:
-#   x[0] = emp_id
-#   x[1] = emp_name
-#   x[2] = salary
-#   x[3] = dep_id
-#
-# Αντιστοίχιση θέσεων για departments:
-#   x[0] = id
-#   x[1] = dpt_name
-# =======================
+# --------------------------
+# Αρχικά δεδομένα
+# --------------------------
 
-# Φόρτωση και ανάλυση των δεδομένων υπαλλήλων
-employees = sc.textFile("hdfs://hdfs-namenode:9000/user/ikons/examples/employees.csv") \
-    .map(lambda x: x.split(","))  # → [emp_id, emp_name, salary, dep_id]
-# Κατευθείαν υπολογισμός των ετήσιων εισοδημάτων χρησιμοποιώντας lambda function:
-employees_yearly_income = employees \
-    .map (lambda x: [x[1]), 14*(int(x[2]))]) # → [emp_name, 14*salary]
-# Εμφάνιση της τελικής εξόδου (για δοκιμή/debugging)
-for item in employees_yearly_income.coalesce(1).collect():
-    print(item)
-# Αποθήκευση της τελικής εξόδου στο HDFS
-employees_yearly_income.coalesce(1).saveAsTextFile(output_dir)
+# Dataset A: (employee_id, employee_name, department_id)
+data_a = [
+    (1, "George K", 1),
+    (2, "John T", 2),
+    (3, "Mary M", 1),
+    (4, "Jerry S", 3)
+]
 
+# Dataset B: (department_id, department_name)
+data_b = [
+    (1, "Dep A"),
+    (2, "Dep B"),
+    (3, "Dep C")
+]
+
+# --------------------------
+# Δημιουργία RDDs
+# --------------------------
+
+rdd_a = sc.parallelize(data_a)
+rdd_b = sc.parallelize(data_b)
+
+# --------------------------
+# Προετοιμασία για ένωση
+# --------------------------
+
+# Δημιουργούμε key-value ζεύγη χρησιμοποιώντας το department_id ως κλειδί
+# και προσθέτουμε "ετικέτα" για το dataset (1 για A, 2 για B)
+
+# Από το Dataset A:
+# (department_id, (1, (employee_id, employee_name, department_id)))
+left = rdd_a.map(lambda x: (x[2], (1, x)))
+
+# Από το Dataset B:
+# (department_id, (2, (department_id, department_name)))
+right = rdd_b.map(lambda x: (x[0], (2, x)))
+
+# --------------------------
+# Ένωση των δύο RDDs
+# --------------------------
+
+# Κάνουμε union για να βρεθούν όλες οι εγγραφές στο ίδιο RDD
+unioned_data = left.union(right)
+
+# --------------------------
+# Ομαδοποίηση βάσει του department_id
+# --------------------------
+
+# Οι εγγραφές με το ίδιο department_id θα μαζευτούν μαζί
+grouped = unioned_data.groupByKey()
+
+# --------------------------
+# Συνάρτηση για ενοποίηση των δεδομένων
+# --------------------------
+
+def arrange(records):
+    left_origin = []   # Εγγραφές από το Dataset A (υπάλληλοι)
+    right_origin = []  # Εγγραφές από το Dataset B (τμήματα)
+    
+    for (source_id, value) in records:
+        if source_id == 1:
+            left_origin.append(value)
+        elif source_id == 2:
+            right_origin.append(value)
+
+    # Επιστρέφουμε κάθε συνδυασμό υπαλλήλου με όνομα τμήματος
+    return [(employee, dept) for employee in left_origin for dept in right_origin]
+
+# --------------------------
+# Τελικό αποτέλεσμα με join
+# --------------------------
+
+# Εφαρμόζουμε flatMapValues για να "ξεδιπλώσουμε" τα αποτελέσματα
+joined = grouped.flatMapValues(lambda x: arrange(x))
+
+# Επιστρέφει: (department_id, ((employee_id, name, dept_id), (dept_id, dept_name)))
+for record in joined.collect():
+    print(record)
 ```
+
 
 ## Dataframes
 
