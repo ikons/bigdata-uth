@@ -296,7 +296,7 @@ hdfs dfs -put -f ~/wordcount_localdir.py
 
 ```bash
 spark-submit \
-    --master k8s://https://source-code-master:6443 \
+    --master k8s://https://10.42.0.1:6443 \
     --deploy-mode cluster \
     --name wordcount \
     --conf spark.hadoop.fs.permissions.umask-mode=000 \
