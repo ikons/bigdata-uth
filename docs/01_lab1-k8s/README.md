@@ -347,6 +347,10 @@ https://spark.apache.org/docs/latest/configuration.html
 ```bash
 # ⚠️ αντικατέστησε 👇 το testuser με το δικό σου username
 USERNAME=testuser
+```
+
+Στο ίδιο τερματικό τώρα τρέξτε
+```bash
 cat > ~/spark-3.5.5-bin-hadoop3/conf/spark-defaults.conf <<EOF
 spark.master k8s://https://10.42.0.1:6443
 spark.submit.deployMode cluster
