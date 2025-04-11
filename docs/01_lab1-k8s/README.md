@@ -422,6 +422,11 @@ hadoop fs –mkdir -p <path>
 hadoop fs -put <localpath> <hdfspath>
 ```
 
+Η εντολή αυτή σβήνει στο hdfs τον απομακρυσμένο κατάλογο `<hdfspath>` μαζί με τα αρχεία και τους υποκαταλόγους που περιέχει:
+
+```                                                                                                                                                hadoop fs -rm -r <hdfspath>
+```
+
 ## Χρήσιμες εντολές Linux
 
 ```bash
