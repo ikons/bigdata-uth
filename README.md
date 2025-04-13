@@ -1,6 +1,6 @@
 # 🔥 Big Data με Apache Spark, HDFS, Docker & Kubernetes
 
-Αυτό το αποθετήριο περιέχει κώδικα, δεδομένα και οδηγίες για την εκτέλεση εργασιών **Apache Spark** με **RDDs**, **DataFrames** και **Map/Reduce** με χρήση **τοπικής (Docker)** και **κατανεμημένης (Kubernetes)** υποδομής για το μάθημα [Συστήματα Διαχείρισης Μεγάλου Όγκου Δεδομένων](https://eclass.uth.gr/courses/CS_U_218/) του [Τμήματος Πληροφορικής και Τηλεπικοινωνιών](http://www.dit.uth.gr) [Πανεπιστημίου Θεσσαλίας](http://www.uth.gr).
+Αυτό το αποθετήριο περιέχει κώδικα, δεδομένα και οδηγίες για την εκτέλεση εργασιών **Apache Spark** με **RDDs**, **DataFrames** και **Map/Reduce** με χρήση **τοπικής (Docker)** και **κατανεμημένης (Kubernetes)** υποδομής για το μάθημα [Συστήματα Διαχείρισης Μεγάλου Όγκου Δεδομένων](https://dit.uth.gr/wp-content/uploads/2023/10/Perigrama-Systimata-Diaxeirisis-Megalou-Ogkou-Dedomenon-neo.pdf) του [Τμήματος Πληροφορικής και Τηλεπικοινωνιών](http://www.dit.uth.gr) [Πανεπιστημίου Θεσσαλίας](http://www.uth.gr).
 
 ---
 
