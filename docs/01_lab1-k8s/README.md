@@ -55,15 +55,15 @@ search default.svc.cluster.local
 Δοκιμάστε πάλι την εντολή
 
 ```bash
-ping source-code-master
+ping source-code-master.cluster.local
 ```
 
 και θα πρέπει να δείτε ένα αποτέλεσμα σαν το παρακάτω (τερματίστε την εκτέλεσή του μέσω `Ctrl+C` αλλιώς θα τρέχει συνέχεια)
 
-ikons@ikons-desktop:~$ ping source-code-master
+ikons@ikons-desktop:~$ ping source-code-master.cluster.local
 
 ```
-PING source-code-master (10.42.0.1) 56(84) bytes of data.
+PING source-code-master.cluster.local (10.42.0.1) 56(84) bytes of data.
 64 bytes from source-code-master.cluster.local (10.42.0.1): icmp_seq=1 ttl=63 time=9.34 ms
 64 bytes from source-code-master.cluster.local (10.42.0.1): icmp_seq=2 ttl=63 time=9.33 ms
 64 bytes from source-code-master.cluster.local (10.42.0.1): icmp_seq=3 ttl=63 time=52.2 ms
