@@ -1,5 +1,11 @@
 [
   {
+    "id": "preparatory-el",
+    "source": "docs/00_Preparatory-lab/README.md",
+    "output": "odigoi/0_Preparatory_lab_Docker_Desktop-wsl.docx",
+    "tocTitle": "Περιεχόμενα"
+  },
+  {
     "id": "preparatory-en",
     "source": "docs/00_Preparatory-lab/README.en.md",
     "output": "odigoi/0_Preparatory_lab_Docker_Desktop-wsl.en.docx",
