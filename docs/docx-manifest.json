@@ -1,0 +1,56 @@
+[
+  {
+    "id": "preparatory-en",
+    "source": "docs/00_Preparatory-lab/README.en.md",
+    "output": "odigoi/0_Preparatory_lab_Docker_Desktop-wsl.en.docx",
+    "tocTitle": "Table of Contents"
+  },
+  {
+    "id": "pycharm-el",
+    "source": "docs/00_pycharm/README.md",
+    "output": "odigoi/0_pycharm_spark_implementation.docx",
+    "tocTitle": "Περιεχόμενα"
+  },
+  {
+    "id": "pycharm-en",
+    "source": "docs/00_pycharm/README.en.md",
+    "output": "odigoi/0_pycharm_spark_implementation.en.docx",
+    "tocTitle": "Table of Contents"
+  },
+  {
+    "id": "lab1-docker-el",
+    "source": "docs/01_lab1-docker/README.md",
+    "output": "odigoi/01_lab1-docker.docx",
+    "tocTitle": "Περιεχόμενα"
+  },
+  {
+    "id": "lab1-docker-en",
+    "source": "docs/01_lab1-docker/README.en.md",
+    "output": "odigoi/01_lab1-docker.en.docx",
+    "tocTitle": "Table of Contents"
+  },
+  {
+    "id": "lab1-k8s-el",
+    "source": "docs/01_lab1-k8s/README.md",
+    "output": "odigoi/01_lab1-k8s.docx",
+    "tocTitle": "Περιεχόμενα"
+  },
+  {
+    "id": "lab1-k8s-en",
+    "source": "docs/01_lab1-k8s/README.en.md",
+    "output": "odigoi/01_lab1-k8s.en.docx",
+    "tocTitle": "Table of Contents"
+  },
+  {
+    "id": "lab2-el",
+    "source": "docs/02_lab2/README.md",
+    "output": "odigoi/02_lab2.docx",
+    "tocTitle": "Περιεχόμενα"
+  },
+  {
+    "id": "lab2-en",
+    "source": "docs/02_lab2/README.en.md",
+    "output": "odigoi/02_lab2.en.docx",
+    "tocTitle": "Table of Contents"
+  }
+]
