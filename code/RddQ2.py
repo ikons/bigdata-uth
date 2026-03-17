@@ -7,67 +7,67 @@ sc = SparkSession \
     .getOrCreate() \
     .sparkContext
 
-# ΕΛΑΧΙΣΤΟΠΟΙΗΣΗ ΕΞΟΔΩΝ ΚΑΤΑΓΡΑΦΗΣ (LOGGING)
+# MINIMIZE LOG OUTPUT
 sc.setLogLevel("ERROR")
 
-# Λήψη του job ID και καθορισμός της διαδρομής εξόδου
+# Retrieve the job ID and define the output path
 job_id = sc.applicationId
 output_dir = f"hdfs://hdfs-namenode:9000/user/{username}/RddQ2_{job_id}"
 
 # =======================
-# ΠΛΗΡΟΦΟΡΙΕΣ ΣΧΗΜΑΤΟΣ:
+# SCHEMA INFORMATION:
 # employees:   "emp_id", "emp_name", "salary", "dep_id"
 # departments: "id", "dpt_name"
 #
-# Αντιστοίχιση θέσεων για employees:
+# Column mapping for employees:
 #   x[0] = emp_id
 #   x[1] = emp_name
 #   x[2] = salary
 #   x[3] = dep_id
 #
-# Αντιστοίχιση θέσεων για departments:
+# Column mapping for departments:
 #   x[0] = id
 #   x[1] = dpt_name
 # =======================
 
-# Φόρτωση και ανάλυση των δεδομένων υπαλλήλων
-employees = sc.textFile("hdfs://hdfs-namenode:9000/user/ikons/examples/employees.csv") \
+# Load and parse employee data
+employees = sc.textFile(f"hdfs://hdfs-namenode:9000/user/{username}/examples/employees.csv") \
     .map(lambda x: x.split(","))  # → [emp_id, emp_name, salary, dep_id]
 
-# Φόρτωση και ανάλυση των δεδομένων τμημάτων
-departments = sc.textFile("hdfs://hdfs-namenode:9000/user/ikons/examples/departments.csv") \
+# Load and parse department data
+departments = sc.textFile(f"hdfs://hdfs-namenode:9000/user/{username}/examples/departments.csv") \
     .map(lambda x: x.split(","))  # → [id, dpt_name]
 
-# Φιλτράρισμα μόνο των τμημάτων με dpt_name == "Dep A"
+# Keep only departments with dpt_name == "Dep A"
 depA = departments.filter(lambda x: x[1] == "Dep A")
 
-# Μορφοποίηση υπαλλήλων σε (dep_id, [emp_id, emp_name, salary])
-# Χρήση του x[3] = dep_id ως κλειδί
+# Format employees as (dep_id, [emp_id, emp_name, salary])
+# Use x[3] = dep_id as the key
 employees_formatted = employees.map(lambda x: [x[3], [x[0], x[1], x[2]]])
 
-# Μορφοποίηση τμημάτων σε (id, [dpt_name])
-# Χρήση του x[0] = id ως κλειδί
+# Format departments as (id, [dpt_name])
+# Use x[0] = id as the key
 depA_formatted = depA.map(lambda x: [x[0], [x[1]]])
 
-# Συνένωση υπαλλήλων με το τμήμα "Dep A" βάσει dep_id
-# Αποτέλεσμα: (dep_id, ([emp_id, emp_name, salary], [dpt_name]))
+# Join employees with department "Dep A" using dep_id
+# Result: (dep_id, ([emp_id, emp_name, salary], [dpt_name]))
 joined_data = employees_formatted.join(depA_formatted)
 
-# Εξαγωγή μόνο των στοιχείων υπαλλήλων (χωρίς τα στοιχεία του τμήματος)
-# Αποτέλεσμα: [emp_id, emp_name, salary]
+# Extract only employee fields (without department fields)
+# Result: [emp_id, emp_name, salary]
 get_employees = joined_data.map(lambda x: x[1][0])
 
-# Ταξινόμηση υπαλλήλων κατά φθίνουσα σειρά μισθού
-# Είσοδος: [emp_id, emp_name, salary] — x[2] = salary
-# Έξοδος: (salary, [emp_id, emp_name])
+# Sort employees by salary in descending order
+# Input: [emp_id, emp_name, salary] — x[2] = salary
+# Output: (salary, [emp_id, emp_name])
 sorted_employees = get_employees.map(lambda x: [int(x[2]), [x[0], x[1]]]) \
     .sortByKey(ascending=False)
 
-# Δημιουργία RDD με διαχωριστική γραμμή για την τελική έξοδο
+# Create an RDD with a separator line for the final output
 delimiter = ["=========="]
-delimiter_rdd = sc.parallelize(delimiter)  # RDD μίας γραμμής
+delimiter_rdd = sc.parallelize(delimiter)  # Single-line RDD
 
-# Συνένωση όλων των RDD με διαχωριστικά ενδιάμεσα
+# Concatenate all RDDs with separators in between
 final_rdd = employees_formatted.union(delimiter_rdd) \
     .union(departments) \
     .union(delimiter_rdd) \
@@ -75,9 +75,9 @@ final_rdd = employees_formatted.union(delimiter_rdd) \
     .union(delimiter_rdd) \
     .union(sorted_employees)
 
-# Εμφάνιση της τελικής εξόδου (για δοκιμή/debugging)
+# Print the final output (for testing/debugging)
 for item in final_rdd.coalesce(1).collect():
     print(item)
 
-# Αποθήκευση της τελικής εξόδου στο HDFS
+# Save the final output to HDFS
 final_rdd.coalesce(1).saveAsTextFile(output_dir)

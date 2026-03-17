@@ -1,19 +1,17 @@
 from pyspark.sql import SparkSession
 
-# Δημιουργία SparkContext
-
+# Create SparkContext
 sc = SparkSession \
     .builder \
     .appName("Join Datasets with RDD") \
     .getOrCreate() \
     .sparkContext
 
-# ΕΛΑΧΙΣΤΟΠΟΙΗΣΗ ΕΞΟΔΩΝ ΚΑΤΑΓΡΑΦΗΣ (LOGGING)
+# MINIMIZE LOG OUTPUT
 sc.setLogLevel("ERROR")
 
-
 # --------------------------
-# Αρχικά δεδομένα
+# Initial data
 # --------------------------
 
 # Dataset A: (employee_id, employee_name, department_id)
@@ -32,65 +30,65 @@ data_b = [
 ]
 
 # --------------------------
-# Δημιουργία RDDs
+# Create RDDs
 # --------------------------
 
 rdd_a = sc.parallelize(data_a)
 rdd_b = sc.parallelize(data_b)
 
 # --------------------------
-# Προετοιμασία για ένωση
+# Prepare for join
 # --------------------------
 
-# Δημιουργούμε key-value ζεύγη χρησιμοποιώντας το department_id ως κλειδί
-# και προσθέτουμε "ετικέτα" για το dataset (1 για A, 2 για B)
+# Create key-value pairs using department_id as the key
+# and add a dataset tag (1 for A, 2 for B)
 
-# Από το Dataset A:
+# From Dataset A:
 # (department_id, (1, (employee_id, employee_name, department_id)))
 left = rdd_a.map(lambda x: (x[2], (1, x)))
 
-# Από το Dataset B:
+# From Dataset B:
 # (department_id, (2, (department_id, department_name)))
 right = rdd_b.map(lambda x: (x[0], (2, x)))
 
 # --------------------------
-# Ένωση των δύο RDDs
+# Union the two RDDs
 # --------------------------
 
-# Κάνουμε union για να βρεθούν όλες οι εγγραφές στο ίδιο RDD
+# Use union so that all records end up in the same RDD
 unioned_data = left.union(right)
 
 # --------------------------
-# Ομαδοποίηση βάσει του department_id
+# Group by department_id
 # --------------------------
 
-# Οι εγγραφές με το ίδιο department_id θα μαζευτούν μαζί
+# Records with the same department_id are grouped together
 grouped = unioned_data.groupByKey()
 
 # --------------------------
-# Συνάρτηση για ενοποίηση των δεδομένων
+# Function for merging the data
 # --------------------------
 
 def arrange(records):
-    left_origin = []   # Εγγραφές από το Dataset A (υπάλληλοι)
-    right_origin = []  # Εγγραφές από το Dataset B (τμήματα)
-    
+    left_origin = []   # Records from Dataset A (employees)
+    right_origin = []  # Records from Dataset B (departments)
+
     for (source_id, value) in records:
         if source_id == 1:
             left_origin.append(value)
         elif source_id == 2:
             right_origin.append(value)
 
-    # Επιστρέφουμε κάθε συνδυασμό υπαλλήλου με όνομα τμήματος
+    # Return every employee/department-name combination
     return [(employee, dept) for employee in left_origin for dept in right_origin]
 
 # --------------------------
-# Τελικό αποτέλεσμα με join
+# Final join result
 # --------------------------
 
-# Εφαρμόζουμε flatMapValues για να "ξεδιπλώσουμε" τα αποτελέσματα
+# Use flatMapValues to unroll the results
 joined = grouped.flatMapValues(lambda x: arrange(x))
 
-# Επιστρέφει: (department_id, ((employee_id, name, dept_id), (dept_id, dept_name)))
+# Returns: (department_id, ((employee_id, name, dept_id), (dept_id, dept_name)))
 for record in joined.collect():
     print(record)

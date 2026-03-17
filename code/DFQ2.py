@@ -8,13 +8,13 @@ spark = SparkSession \
     .getOrCreate()
 sc = spark.sparkContext
 
-# ΕΛΑΧΙΣΤΟΠΟΙΗΣΗ ΕΞΟΔΩΝ ΚΑΤΑΓΡΑΦΗΣ (LOGGING)
+# MINIMIZE LOG OUTPUT
 sc.setLogLevel("ERROR")
 
 job_id = spark.sparkContext.applicationId
 output_dir = f"hdfs://hdfs-namenode:9000/user/{username}/DFQ2_{job_id}"
 
-# Ορισμός σχήματος για το DataFrame των υπαλλήλων
+# Define the schema for the employees DataFrame
 employees_schema = StructType([
     StructField("id", IntegerType()),
     StructField("name", StringType()),
@@ -22,34 +22,34 @@ employees_schema = StructType([
     StructField("dep_id", IntegerType()),
 ])
 
-# Φόρτωση του DataFrame των υπαλλήλων
+# Load the employees DataFrame
 employees_df = spark.read.format('csv') \
     .options(header='false') \
     .schema(employees_schema) \
     .load(f"hdfs://hdfs-namenode:9000/user/{username}/examples/employees.csv")
 
-# Ορισμός σχήματος για το DataFrame των τμημάτων
+# Define the schema for the departments DataFrame
 departments_schema = StructType([
     StructField("id", IntegerType()),
     StructField("name", StringType()),
 ])
 
-# Φόρτωση του DataFrame των τμημάτων
+# Load the departments DataFrame
 departments_df = spark.read.format('csv') \
     .options(header='false') \
     .schema(departments_schema) \
     .load(f"hdfs://hdfs-namenode:9000/user/{username}/examples/departments.csv")
 
-# Καταχώρηση των DataFrames ως προσωρινοί πίνακες (temporary views)
+# Register the DataFrames as temporary views
 employees_df.createOrReplaceTempView("employees")
 departments_df.createOrReplaceTempView("departments")
 
-# Ερώτημα για την εύρεση του id του 'Dep A'
+# Query to find the id of 'Dep A'
 id_query = "SELECT departments.id, departments.name FROM departments WHERE departments.name == 'Dep A'"
 depA_id = spark.sql(id_query)
 depA_id.createOrReplaceTempView("depA")
 
-# Ερώτημα με εσωτερική συνένωση (inner join) για την εξαγωγή δεδομένων υπαλλήλων του 'Dep A'
+# Inner join query to extract employees from 'Dep A'
 inner_join_query = """
     SELECT employees.name, employees.salary
     FROM employees
@@ -58,8 +58,8 @@ inner_join_query = """
 """
 joined_data = spark.sql(inner_join_query)
 
-# Εμφάνιση των δεδομένων της συνένωσης (για έλεγχο)
+# Display the join result (for verification)
 joined_data.show()
 
-# Συγχώνευση σε ένα μόνο partition και αποθήκευση του τελικού DataFrame στο HDFS
+# Coalesce to a single partition and save the final DataFrame to HDFS
 joined_data.coalesce(1).write.format("csv").option("header", "false").save(output_dir)

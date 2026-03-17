@@ -7,20 +7,20 @@ sc = SparkSession \
     .getOrCreate() \
     .sparkContext
 
-# ΕΛΑΧΙΣΤΟΠΟΙΗΣΗ ΕΞΟΔΩΝ ΚΑΤΑΓΡΑΦΗΣ (LOGGING)
+# MINIMIZE LOG OUTPUT
 sc.setLogLevel("ERROR")
 
-# Λήψη του job ID και καθορισμός της διαδρομής εξόδου
+# Retrieve the job ID and define the output path
 job_id = sc.applicationId
 output_dir = f"hdfs://hdfs-namenode:9000/user/{username}/RddQ1_{job_id}"
 
-# Φόρτωση και επεξεργασία δεδομένων
-# Στήλες CSV: "id", "name", "salary", "dep_id"
+# Load and preprocess data
+# CSV columns: "id", "name", "salary", "dep_id"
 employees = sc.textFile(f"hdfs://hdfs-namenode:9000/user/{username}/examples/employees.csv") \
-    .map(lambda x: x.split(","))  # Διαχωρισμός κάθε γραμμής σε λίστα
+    .map(lambda x: x.split(","))  # Split each line into a list
 
-# Αντιστοίχιση κάθε υπαλλήλου στη μορφή (salary, [id, name, dep_id]) και ταξινόμηση κατά μισθό (αύξουσα σειρά)
-# Αντιστοίχιση στηλών:
+# Map each employee to the form (salary, [id, name, dep_id]) and sort by salary (ascending)
+# Column mapping:
 #   x[0] = id
 #   x[1] = name
 #   x[2] = salary
@@ -28,9 +28,9 @@ employees = sc.textFile(f"hdfs://hdfs-namenode:9000/user/{username}/examples/emp
 sorted_employees = employees.map(lambda x: [int(x[2]), [x[0], x[1], x[3]]]) \
     .sortByKey()
 
-# Εμφάνιση των δεδομένων (για έλεγχο)
+# Print the data (for verification)
 for item in sorted_employees.coalesce(1).collect():
-    print(item)  # Παράδειγμα εξόδου: [60000, ['123', 'Alice', '5']]
+    print(item)  # Example output: [60000, ['123', 'Alice', '5']]
 
-# Συγχώνευση για μείωση αριθμού αρχείων εξόδου και αποθήκευση στο HDFS
+# Coalesce to reduce the number of output files and save to HDFS
 sorted_employees.coalesce(1).saveAsTextFile(output_dir)

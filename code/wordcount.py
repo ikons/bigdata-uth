@@ -6,30 +6,30 @@ sc = SparkSession \
     .getOrCreate() \
     .sparkContext
 
-# ΕΛΑΧΙΣΤΟΠΟΙΗΣΗ ΕΞΟΔΩΝ ΚΑΤΑΓΡΑΦΗΣ (LOGGING)
+# MINIMIZE LOG OUTPUT
 sc.setLogLevel("ERROR")
 
-# Λήψη του job ID και καθορισμός διαδρομής εξόδου
+# Retrieve the job ID and define the output path
 job_id = sc.applicationId
 output_dir = f"hdfs://hdfs-namenode:9000/user/{username}/wordcount_output_{job_id}"
 
-# Φόρτωση αρχείου κειμένου από το HDFS και υπολογισμός συχνοτήτων λέξεων
+# Load the text file from HDFS and compute word frequencies
 wordcount = (
     sc.textFile(f"hdfs://hdfs-namenode:9000/user/{username}/examples/text.txt") \
-    .flatMap(lambda x: x.split(" "))                 # Διάσπαση κάθε γραμμής σε λέξεις
-    .map(lambda x: (x, 1))                           # Χαρτογράφηση (map) κάθε λέξης σε (λέξη, 1)
-    .reduceByKey(lambda x, y: x + y)                 # Άθροιση εμφανίσεων για κάθε λέξη
-    .sortBy(lambda x: x[1], ascending=False)         # Ταξινόμηση κατά φθίνουσα συχνότητα
+    .flatMap(lambda x: x.split(" "))                 # Split each line into words
+    .map(lambda x: (x, 1))                           # Map each word to (word, 1)
+    .reduceByKey(lambda x, y: x + y)                 # Sum occurrences for each word
+    .sortBy(lambda x: x[1], ascending=False)         # Sort by frequency in descending order
 )
 
-# Εμφάνιση των αποτελεσμάτων (για έλεγχο)
+# Print the results (for verification)
 for item in wordcount.coalesce(1).collect():
     print(item)
 
-# Συγχώνευση για μείωση των αρχείων εξόδου και αποθήκευση στο HDFS
+# Coalesce to reduce the number of output files and save to HDFS
 wordcount.saveAsTextFile(output_dir)
 
-# Παράδειγμα αποτελεσμάτων:
+# Example output:
 # [('text', 3), ('this', 2), ('is', 2), ('like', 2), ('a', 2),
 #  ('file', 2), ('words', 2), (',', 2), ('an', 1), ('of', 1),
 #  ('with', 1), ('random', 1), ('example', 1)]

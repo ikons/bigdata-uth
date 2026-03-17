@@ -7,13 +7,13 @@ spark = SparkSession \
     .appName("DF query 2b execution") \
     .getOrCreate()
 sc = spark.sparkContext
-# ΕΛΑΧΙΣΤΟΠΟΙΗΣΗ ΕΞΟΔΩΝ ΚΑΤΑΓΡΑΦΗΣ (LOGGING)
+# MINIMIZE LOG OUTPUT
 sc.setLogLevel("ERROR")
 
 job_id = spark.sparkContext.applicationId
 output_dir = f"hdfs://hdfs-namenode:9000/user/{username}/DF2b_{job_id}"
 
-# Ορισμός σχήματος για το DataFrame των υπαλλήλων
+# Define the schema for the employees DataFrame
 employees_schema = StructType([
     StructField("emp_id", IntegerType()),
     StructField("emp_name", StringType()),
@@ -21,40 +21,40 @@ employees_schema = StructType([
     StructField("dep_id", IntegerType()),
 ])
 
-# Φόρτωση του DataFrame των υπαλλήλων
+# Load the employees DataFrame
 employees_df = spark.read.format('csv') \
     .options(header='false') \
     .schema(employees_schema) \
     .load(f"hdfs://hdfs-namenode:9000/user/{username}/examples/employees.csv")
 
-# Ορισμός σχήματος για το DataFrame των τμημάτων
+# Define the schema for the departments DataFrame
 departments_schema = StructType([
     StructField("id", IntegerType()),
     StructField("dpt_name", StringType()),
 ])
 
-# Φόρτωση του DataFrame των τμημάτων
+# Load the departments DataFrame
 departments_df = spark.read.format('csv') \
     .options(header='false') \
     .schema(departments_schema) \
     .load(f"hdfs://hdfs-namenode:9000/user/{username}/examples/departments.csv")
 
-# Εκτέλεση εσωτερικής σύνδεσης (inner join) μεταξύ των DataFrames υπαλλήλων και τμημάτων
+# Execute an inner join between the employee and department DataFrames
 joinedDf = employees_df.join(departments_df, employees_df.dep_id == departments_df.id, "inner")
 
-# Εμφάνιση των συνδεδεμένων δεδομένων (για έλεγχο)
+# Display the joined data (for verification)
 joinedDf.show()
 
-# Ομαδοποίηση κατά αναγνωριστικό τμήματος και υπολογισμός αθροίσματος μισθών
+# Group by department id and compute the salary sum
 groupedDf = joinedDf.groupBy("dep_id").sum("salary")
 
-# Εμφάνιση των ομαδοποιημένων δεδομένων (για έλεγχο)
+# Display the grouped data (for verification)
 groupedDf.show()
 
-# Συγχώνευση των DataFrames σε ένα μόνο partition και αποθήκευσή τους στο HDFS
+# Coalesce both DataFrames into a single partition and save them to HDFS
 
-# Αποθήκευση του DataFrame της σύνδεσης στο HDFS
+# Save the joined DataFrame to HDFS
 joinedDf.coalesce(1).write.format("csv").option("header", "false").save(f"{output_dir}_joined")
 
-# Αποθήκευση του ομαδοποιημένου DataFrame στο HDFS
+# Save the grouped DataFrame to HDFS
 groupedDf.coalesce(1).write.format("csv").option("header", "false").save(f"{output_dir}_grouped")

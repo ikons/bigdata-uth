@@ -7,39 +7,39 @@ sc = SparkSession \
     .getOrCreate() \
     .sparkContext
 
-# ΕΛΑΧΙΣΤΟΠΟΙΗΣΗ ΕΞΟΔΩΝ ΚΑΤΑΓΡΑΦΗΣ (LOGGING)
+# MINIMIZE LOG OUTPUT
 sc.setLogLevel("ERROR")
 
-# Λήψη του job ID και καθορισμός της διαδρομής εξόδου
+# Retrieve the job ID and define the output path
 job_id = sc.applicationId
 output_dir = f"hdfs://hdfs-namenode:9000/user/{username}/RddQ3_{job_id}"
 
 # =======================
-# ΠΛΗΡΟΦΟΡΙΕΣ ΣΧΗΜΑΤΟΣ:
+# SCHEMA INFORMATION:
 # employees:   "emp_id", "emp_name", "salary", "dep_id"
 # departments: "id", "dpt_name"
 #
-# Αντιστοίχιση θέσεων για employees:
+# Column mapping for employees:
 #   x[0] = emp_id
 #   x[1] = emp_name
 #   x[2] = salary
 #   x[3] = dep_id
 #
-# Αντιστοίχιση θέσεων για departments:
+# Column mapping for departments:
 #   x[0] = id
 #   x[1] = dpt_name
 # =======================
 
-# Φόρτωση και ανάλυση των δεδομένων υπαλλήλων
+# Load and parse employee data
 employees = sc.textFile(f"hdfs://hdfs-namenode:9000/user/{username}/examples/employees.csv") \
     .map(lambda x: x.split(","))  # → [emp_id, emp_name, salary, dep_id]
 
-# Κατευθείαν υπολογισμός των ετήσιων εισοδημάτων χρησιμοποιώντας lambda function:
-employees_yearly_income = employees.map(lambda x: [x[1], 14*(int(x[2]))]) # → [emp_name, 14*salary]
+# Directly compute yearly income using a lambda function
+employees_yearly_income = employees.map(lambda x: [x[1], 14 * int(x[2])])  # → [emp_name, 14*salary]
 
-# Εμφάνιση της τελικής εξόδου (για δοκιμή/debugging)
+# Print the final output (for testing/debugging)
 for item in employees_yearly_income.coalesce(1).collect():
     print(item)
 
-# Αποθήκευση της τελικής εξόδου στο HDFS
+# Save the final output to HDFS
 employees_yearly_income.coalesce(1).saveAsTextFile(output_dir)
