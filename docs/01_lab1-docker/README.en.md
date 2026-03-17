@@ -81,7 +81,11 @@ docker build -t my-python-app .
 docker run my-python-app
 ```
 
-To run the built image as a container, use the command above. The first time you run it, Docker downloads the required dependencies. On subsequent runs, this is no longer necessary.
+To run the built image as a container, use the command above.
+
+![Figure 5](images/img5.png)
+
+The first time you run it, Docker downloads the required dependencies. On subsequent runs, this is no longer necessary.
 
 - **Docker Compose:** A tool that manages multiple containers through a `docker-compose.yml` file, defining services, networks, and persistent storage.
 - Docker containers have an **ephemeral file system**, so data stored only inside the container is lost when the container is removed.
@@ -160,6 +164,8 @@ In the Docker setup used here, volumes are stored as subdirectories under a loca
 Because the local Docker server is itself a virtual machine, that directory is part of the Docker VM file system.
 
 To see this, open a Windows terminal (**right-click the Windows icon → Terminal**) and run:
+
+![Figure 13](images/img13.png)
 
 ```bash
 wsl -l -v

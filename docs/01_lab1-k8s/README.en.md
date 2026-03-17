@@ -105,7 +105,9 @@ mkdir ~/.kube
 
 Copy the `config` file you received by email to `~/.kube/config`, so that `kubectl` can connect to the k8s infrastructure.
 
-If you initially downloaded the file on Windows, you need to copy it from the Windows host file system into your WSL Linux home directory. Suppose the file is in the Windows user's `Downloads` folder.
+To do this, you need to copy the `config` file from the location in the Windows host file system where you originally downloaded it into the `~/.kube` directory inside WSL Linux.
+
+Assume that you downloaded the file into the Windows user's `Downloads` folder. In my case, for example, the path is `/mnt/c/Users/ikons/Downloads/config`.
 
 Run the following commands in WSL Linux. Replace **ikons** with your own Windows username.
 
@@ -121,13 +123,13 @@ mkdir .kube
 cp /mnt/c/Users/ikons/Downloads/config ~/.kube/config
 ```
 
-An alternative is to use Windows Explorer and browse to the Linux folder directly.
+Another way to do this is through Windows Explorer by opening the Linux folder directly.
 
 ![Figure 1](images/img1.png)
 
 ## Installing k9s
 
-`k9s` is a terminal tool for monitoring and managing Kubernetes clusters.
+`k9s` is a terminal tool for monitoring and managing Kubernetes clusters. Install it as follows:
 
 ```bash
 # Download the k9s .deb package from GitHub
@@ -166,7 +168,7 @@ wget https://dlcdn.apache.org/hadoop/common/hadoop-3.4.1/hadoop-3.4.1.tar.gz
 tar -xzf hadoop-3.4.1.tar.gz
 ```
 
-Add the following environment variables to your shell configuration file. Replace `testuser` with your own username.
+Add the following environment variables to your shell configuration file. Replace `testuser` with your own username. In my case, for example, it becomes `export HADOOP_USER_NAME=ikons`.
 
 ```bash
 export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
@@ -176,7 +178,9 @@ export PATH=$HOME/spark-3.5.5-bin-hadoop3/bin:$HOME/hadoop-3.4.1/bin:$PATH
 export HADOOP_USER_NAME=testuser
 ```
 
-Save the file and then load the new settings:
+Save the file (`Ctrl+X`, then `Y`, then `Enter`).
+
+Finally, run the following command to load the new settings into the environment:
 
 ```bash
 . ~/.bashrc
@@ -203,48 +207,50 @@ If everything is configured correctly, open the following page on your computer:
 
 http://hdfs-namenode:9870/
 
-Then choose **Utilities → Browse the file system** and enter the path `/user/username`. There you will be able to see the outputs of your jobs.
+Then select **Utilities -> Browse the file system** and enter the path `/user/username`. There you will be able to see the outputs of your jobs.
 
 ![Figure 2](images/img2.png)
 
 ## Running a test WordCount program
 
-Create a Python file named `wordcount_localdir.py` with the following content:
+Create the file `wordcount_localdir.py` and place the following content in it:
 
 ```python
-from pyspark import SparkContext
+from pyspark import SparkContext  # Import SparkContext to create the Spark application
 
-# Initialize SparkContext
+# Create a SparkContext with the application name "WordCount"
 sc = SparkContext(appName="WordCount")
 
-input_dir = "hdfs://hdfs-namenode:9000/user/ikons/examples/text.txt"
-# Get the application ID (job ID) from the Spark context
+# Define the input file in HDFS
+# ⚠️ Replace testuser with your own username
+input_dir = "hdfs://hdfs-namenode:9000/user/testuser/text.txt"
+
+# Get the unique Spark application ID
 job_id = sc.applicationId
 
-# Create the dynamic output directory by appending the job ID
-output_dir = f"hdfs://hdfs-namenode:9000/user/ikons/wordcount_output_{job_id}"
+# Create the output path based on the job_id to avoid conflicts
+# ⚠️ Replace testuser with your own username
+output_dir = f"hdfs://hdfs-namenode:9000/user/testuser/wordcount_output_{job_id}"
 
-# Perform the word count operation
+# Read the text file from HDFS
 text_files = sc.textFile(input_dir)
 
-#sampled_text = text_files.sample(withReplacement=False, fraction=0.001, seed=42)
-
-# Split lines into words, map them to (word, 1) pairs, then reduce by key
+# Perform the word count:
+# 1. flatMap: split each line into words
+# 2. map: create (word, 1) pairs
+# 3. reduceByKey: add the occurrences of each word
 word_count = text_files.flatMap(lambda line: line.split(" ")) \
                        .map(lambda word: (word, 1)) \
                        .reduceByKey(lambda a, b: a + b)
 
+# Save the results to HDFS
+word_count.saveAsTextFile(output_dir)
 
-# Sort the results by occurrences in decreasing order
-sorted_word_count = word_count.map(lambda x: (x[1], x[0])) \
-                               .sortByKey(ascending=False) \
-                               .map(lambda x: (x[1], x[0]))
-
-# Save the sorted results directly to HDFS in a single output file
-sorted_word_count.coalesce(1).saveAsTextFile(output_dir)
+# Stop the SparkContext
+sc.stop()
 ```
 
-✅ **Note:** Replace `ikons` in the file with the username you received.
+**Note:** Replace `testuser` with the username you received (for example, `ikons`).
 
 Copy the required files into HDFS:
 
@@ -262,7 +268,7 @@ hdfs dfs -put -f ~/text.txt
 hdfs dfs -put -f ~/wordcount_localdir.py
 ```
 
-📂 The `-put -f` option overwrites the file in HDFS if it already exists.
+The `-put -f` option overwrites the file in HDFS if it already exists.
 
 ## Running Spark on Kubernetes
 
@@ -287,43 +293,45 @@ spark-submit \
     hdfs://hdfs-namenode:9000/user/testuser/wordcount_localdir.py
 ```
 
-Replace **testuser** with the username you received by email.
+Replace **testuser** with the username you received by email. For example, in my case it is **ikons**.
 
 This command submits a Spark job to a Kubernetes cluster. The main parameters are:
 
-- `--master k8s://https://10.42.0.1:6443`: the Kubernetes API endpoint.
-- `--deploy-mode cluster`: run the application inside the cluster rather than on the local computer.
-- `--name wordcount`: the name of the Spark application.
-- `--conf spark.hadoop.fs.permissions.umask-mode=000`: Hadoop file permission settings.
-- `--conf spark.kubernetes.authenticate.driver.serviceAccountName=spark`: service account used by the Spark driver.
-- `--conf spark.kubernetes.namespace=testuser-priv`: namespace where the job will run.
-- `--conf spark.executor.instances=5`: create 5 executors.
-- `--conf spark.kubernetes.container.image=apache/spark`: the container image used by Spark.
-- `--conf spark.kubernetes.submission.waitAppCompletion=false`: submit the job without waiting for completion.
-- `--conf spark.eventLog.enabled=true`: enable Spark event logging.
-- `--conf spark.eventLog.dir=...`: where the Spark event logs will be stored in HDFS.
-- `--conf spark.history.fs.logDirectory=...`: where the History Server will later read the logs from.
-- `hdfs://.../wordcount_localdir.py`: the Python file to execute.
+- `--master k8s://https://10.42.0.1:6443`: defines the Kubernetes master endpoint. The `k8s://` prefix indicates that the job will run on Kubernetes.
+- `--deploy-mode cluster`: defines the application deployment mode. `cluster` means that the job will run inside the Kubernetes cluster rather than on the user's local computer.
+- `--name wordcount`: sets the name of the Spark application that will run on Kubernetes.
+- `--conf spark.hadoop.fs.permissions.umask-mode=000`: defines Hadoop file-system permissions.
+- `--conf spark.kubernetes.authenticate.driver.serviceAccountName=spark`: sets the Kubernetes service account used by the driver.
+- `--conf spark.kubernetes.namespace=testuser-priv`: defines the Kubernetes namespace where the job will run.
+- `--conf spark.executor.instances=5`: defines the number of executors that will be created for the job.
+- `--conf spark.kubernetes.container.image=apache/spark`: defines the container image used for the execution.
+- `--conf spark.kubernetes.submission.waitAppCompletion=false`: specifies whether `spark-submit` should wait for the application to finish. When set to `false`, the Spark job starts and the submission process exits immediately.
+- `--conf spark.eventLog.enabled=true`: enables event logging for the Spark job.
+- `--conf spark.eventLog.dir=hdfs://hdfs-namenode:9000/user/testuser/logs`: defines where event-log files will be stored in HDFS.
+- `--conf spark.history.fs.logDirectory=hdfs://hdfs-namenode:9000/user/testuser/logs`: defines where the Spark History Server will read the history logs from.
+- `hdfs://hdfs-namenode:9000/user/testuser/wordcount_localdir.py`: defines the path of the Python file that contains the application code.
 
-All tunable Spark parameters are documented here:
+All configurable parameters are available on the page below:
 
 https://spark.apache.org/docs/latest/configuration.html
 
-Other useful options include:
+Other important parameters that may help during execution are:
 
-- `--conf spark.log.level=DEBUG`: emit more debug output.
-- `--conf spark.executor.memory=2g`: allocate more memory per executor if your jobs need it.
+- `--conf spark.log.level=DEBUG`: produces more messages during execution for debugging.
+- `--conf spark.executor.memory=2g`: allocates more RAM per executor when your jobs need more memory. This is useful when executors terminate due to OOM (Out of Memory) errors.
+
+These parameters allow a Spark application to run correctly on a Kubernetes cluster, while also providing settings for HDFS, logging, executors, and other Kubernetes-related options.
 
 ## Storing default Spark parameters
 
-To avoid rewriting the full parameter list every time you run Spark, you can place the defaults into a Spark configuration file. Replace `testuser` with your own username.
+To avoid typing all of these parameters every time you run a Spark job, you can place them in a configuration file that Spark will read whenever you execute `spark-submit`. Do not forget to replace the username (in this example, **testuser**) with your own.
 
 ```bash
 # ⚠️ Replace testuser with your own username
 USERNAME=testuser
 ```
 
-Then run:
+Then, in the same terminal, run:
 
 ```bash
 cat > ~/spark-3.5.5-bin-hadoop3/conf/spark-defaults.conf <<EOF
@@ -343,7 +351,7 @@ spark.history.fs.logDirectory hdfs://hdfs-namenode:9000/user/$USERNAME/logs
 EOF
 ```
 
-Now you can execute the previous example more simply:
+Now you can run the previous command simply by executing the following command after replacing `testuser` with your own username:
 
 ```bash
 spark-submit hdfs://hdfs-namenode:9000/user/testuser/wordcount_localdir.py

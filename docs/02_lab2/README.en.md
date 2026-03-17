@@ -573,7 +573,7 @@ Then we combine both RDDs with `union`:
 unioned_data = left.union(right)
 ```
 
-After that, `groupByKey()` ensures that all records with the same department key end up together on the same reducer.
+After that, [`groupByKey()`](https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.RDD.groupByKey.html) ensures that all records with the same department key end up together on the same reducer.
 
 We define `arrange()` to split values by origin and then emit all employee/department combinations.
 
@@ -703,9 +703,7 @@ DataFrames can be created from a variety of sources, such as:
 - external databases
 - existing RDDs
 
-The DataFrame API is different from the RDD API. Its documentation is available here:
-
-https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/dataframe.html
+The DataFrame API is different from the RDD API. Its documentation is available in the [official DataFrame API reference](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/dataframe.html).
 
 ### Query 1 with DataFrames
 
@@ -855,9 +853,15 @@ joined_data.show()
 joined_data.coalesce(1).write.format("csv").option("header", "false").save(output_dir)
 ```
 
-We define the schemas for both files, read them from HDFS, and register them as **temporary views**. This allows us to reference the DataFrames as SQL tables named `employees` and `departments`.
+We define the schemas for both files, read them from HDFS, and then use `registerTempTable` or `createOrReplaceTempView`, which allows us to use the **DataFrames as SQL tables**. This lets us reference the employees DataFrame as `employees` and the departments DataFrame as `departments` inside SQL queries.
 
-We first execute a SQL query that finds the ID of department **Dep A** and register the result as another temporary view named `depA`. Then we run the join query and inspect the result with `show()`.
+Next, we execute a SQL query to find the **ID of department "Dep A"**. We do that by defining the query as a string and executing it with:
+
+```python
+spark.sql(id_query)
+```
+
+This creates a new DataFrame with one record containing the values **1** and **Dep A**. Then we register the `depA` DataFrame as another temporary SQL table and run the join query. Finally, we inspect the rows with `show()`.
 
 Example output:
 
@@ -1024,9 +1028,9 @@ joinedDf.coalesce(1).write.format("csv").option("header", "false").save(f"{outpu
 groupedDf.coalesce(1).write.format("csv").option("header", "false").save(f"{output_dir}_grouped")
 ```
 
-First, we read the two datasets from HDFS. Then we use the built-in DataFrame [`join`](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.DataFrame.join.html) function, specifying the join key (`employees_df.dep_id == departments_df.id`) and the join type (`inner`).
+First, we read the two datasets from **HDFS**. Then we use the built-in DataFrame [`join`](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.DataFrame.join.html) function, specifying the join key `employees_df.dep_id == departments_df.id` and the join type `inner`.
 
-After that, we group the records by `dep_id` and compute the salary sum for each department.
+Next, we perform a [`groupBy`](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.DataFrame.groupBy.html) operation on `dep_id` and use [`sum()`](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.GroupedData.sum.html) to compute the **sum of salaries** for each department.
 
 ```text
 +------+----------+------+------+---+--------+
