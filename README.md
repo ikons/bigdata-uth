@@ -7,10 +7,11 @@
 ## 📘 Σειρά Μελέτης / Οδηγίες Εκτέλεσης (Markdown)
 
 1. [00_Preparatory-lab](docs/00_Preparatory-lab): Προετοιμασία περιβάλλοντος (WSL + Docker Desktop)
-2. [00_pycharm](docs/00_pycharm): Εκτέλεση Spark τοπικά με PyCharm
-3. [01_lab1-docker](docs/01_lab1-docker): Εκκίνηση Spark + HDFS μέσω Docker Compose
-4. [01_lab1-k8s](docs/01_lab1-k8s): Εκτέλεση Spark Jobs σε Kubernetes (vdcloud)
-5. [02_lab2](docs/02_lab2): Εκτέλεση ερωτημάτων συνένωσης με χρήση RDD,  DataFrames και SQL
+2. [00_vscode](docs/00_vscode): Προτεινόμενη τοπική ανάπτυξη Spark με VS Code
+3. [00_pycharm](docs/00_pycharm): Εναλλακτική τοπική ανάπτυξη Spark με PyCharm
+4. [01_lab1-docker](docs/01_lab1-docker): Εκκίνηση Spark + HDFS μέσω Docker Compose
+5. [01_lab1-k8s](docs/01_lab1-k8s): Εκτέλεση Spark Jobs σε Kubernetes (vdcloud)
+6. [02_lab2](docs/02_lab2): Εκτέλεση ερωτημάτων συνένωσης με χρήση RDD,  DataFrames και SQL
 
 📁 Εναλλακτικά, όλοι οι οδηγοί είναι διαθέσιμοι και στον φάκελο [`odigoi/`](./odigoi) σε μορφή `.docx` και `.pdf`.
 
@@ -34,9 +35,22 @@
 
 
 
-## 💻 Εκτέλεση με PyCharm (Τοπική Ανάπτυξη)
+## 💻 Τοπική Ανάπτυξη Spark με VS Code
 
-📄 Οδηγός: [`00_Preparatory-lab`](docs/00_Preparatory-lab)
+📄 Προτεινόμενος οδηγός: [`00_vscode`](docs/00_vscode)
+
+- Προτεινόμενη προσέγγιση για τοπική ανάπτυξη και debugging
+- Χρήση `venv`, εγκατάσταση `pyspark` και `psutil`
+- Εκτέλεση και debugging μέσα από το VS Code
+- Υποστήριξη Spark UI μέσω `localhost:4040`
+
+Εναλλακτικά, αν προτιμάτε άλλο IDE, υπάρχει και ο οδηγός [`00_pycharm`](docs/00_pycharm).
+
+---
+
+## 💻 Εκτέλεση με PyCharm (Εναλλακτικά)
+
+📄 Εναλλακτικός οδηγός: [`00_pycharm`](docs/00_pycharm)
 
 - Χρήση `venv`, εγκατάσταση `pyspark` & `psutil`
 - Ρύθμιση μεταβλητών περιβάλλοντος στο Run Configuration

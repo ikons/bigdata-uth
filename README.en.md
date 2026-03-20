@@ -7,10 +7,11 @@ This repository contains code, datasets, and execution guides for **Apache Spark
 ## 📘 Recommended Study / Execution Order (Markdown)
 
 1. [00_Preparatory-lab](docs/00_Preparatory-lab): Environment preparation (WSL + Docker Desktop)
-2. [00_pycharm](docs/00_pycharm): Running Spark locally with PyCharm
-3. [01_lab1-docker](docs/01_lab1-docker): Launching Spark + HDFS with Docker Compose
-4. [01_lab1-k8s](docs/01_lab1-k8s): Running Spark jobs on Kubernetes (vdcloud)
-5. [02_lab2](docs/02_lab2): Join queries with RDDs, DataFrames, and SQL
+2. [00_vscode](docs/00_vscode): Recommended local Spark development with VS Code
+3. [00_pycharm](docs/00_pycharm): Alternative local Spark development with PyCharm
+4. [01_lab1-docker](docs/01_lab1-docker): Launching Spark + HDFS with Docker Compose
+5. [01_lab1-k8s](docs/01_lab1-k8s): Running Spark jobs on Kubernetes (vdcloud)
+6. [02_lab2](docs/02_lab2): Join queries with RDDs, DataFrames, and SQL
 
 📁 The same guides are also available under [`odigoi/`](./odigoi) in `.docx` format (and one preparatory guide in `.pdf`).
 
@@ -31,9 +32,22 @@ On Windows, `scripts/export-docx.ps1` and `make -C docs docx` also use Microsoft
 
 ---
 
-## 💻 Running Spark with PyCharm (Local Development)
+## 💻 Local Spark Development with VS Code
 
-📄 Guide: [`00_pycharm`](docs/00_pycharm)
+📄 Recommended guide: [`00_vscode`](docs/00_vscode)
+
+- Recommended approach for local development and debugging
+- Use `venv`, install `pyspark` and `psutil`
+- Run and debug directly from VS Code
+- Access the Spark UI at `localhost:4040`
+
+As an alternative, if you prefer another IDE, the repository also includes the [`00_pycharm`](docs/00_pycharm) guide.
+
+---
+
+## 💻 Running Spark with PyCharm (Alternative)
+
+📄 Alternative guide: [`00_pycharm`](docs/00_pycharm)
 
 - Use `venv`, install `pyspark` and `psutil`
 - Configure the required environment variables in the Run Configuration
