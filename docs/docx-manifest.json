@@ -24,6 +24,18 @@
     "tocTitle": "Table of Contents"
   },
   {
+    "id": "vscode-el",
+    "source": "docs/00_vscode/README.md",
+    "output": "odigoi/0_vscode_spark_implementation.docx",
+    "tocTitle": "Περιεχόμενα"
+  },
+  {
+    "id": "vscode-en",
+    "source": "docs/00_vscode/README.en.md",
+    "output": "odigoi/0_vscode_spark_implementation.en.docx",
+    "tocTitle": "Table of Contents"
+  },
+  {
     "id": "lab1-docker-el",
     "source": "docs/01_lab1-docker/README.md",
     "output": "odigoi/01_lab1-docker.docx",

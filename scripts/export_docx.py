@@ -1,9 +1,10 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 from __future__ import annotations
 
 import argparse
 import json
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -16,6 +17,11 @@ from docx.shared import Pt, RGBColor
 ACCENT_COLOR = RGBColor(0x1F, 0x4E, 0x79)
 DEFAULT_MANIFEST = "docs/docx-manifest.json"
 DEFAULT_REFERENCE_DOC = "templates/reference.docx"
+DEFAULT_WINDOWS_PANDOC_PATHS = (
+    Path.home() / "AppData" / "Local" / "Pandoc" / "pandoc.exe",
+    Path.home() / "AppData" / "Local" / "Microsoft" / "WinGet" / "Links" / "pandoc.exe",
+    Path("C:/Program Files/Pandoc/pandoc.exe"),
+)
 
 
 def resolve_argument_path(value: str, repo_root: Path) -> Path:
@@ -27,6 +33,32 @@ def resolve_argument_path(value: str, repo_root: Path) -> Path:
         return (Path.cwd() / raw_path).resolve()
 
     return (repo_root / raw_path).resolve()
+
+
+def resolve_pandoc_executable() -> str:
+    explicit = os.environ.get("PANDOC_EXECUTABLE")
+    if explicit:
+        candidate = Path(explicit).expanduser()
+        if candidate.is_absolute() or any(separator in explicit for separator in ("/", "\\")):
+            if candidate.exists():
+                return str(candidate.resolve())
+        else:
+            resolved = shutil.which(explicit)
+            if resolved:
+                return resolved
+
+    resolved = shutil.which("pandoc")
+    if resolved:
+        return resolved
+
+    if sys.platform == "win32":
+        for candidate in DEFAULT_WINDOWS_PANDOC_PATHS:
+            if candidate.exists():
+                return str(candidate.resolve())
+
+    raise FileNotFoundError(
+        "Pandoc executable not found. Install pandoc or set the PANDOC_EXECUTABLE environment variable."
+    )
 
 
 def set_title_style(paragraph) -> None:
@@ -48,12 +80,12 @@ def apply_postprocessing(document_path: Path) -> None:
     document.save(document_path)
 
 
-def export_entry(repo_root: Path, reference_doc: Path, entry: dict) -> None:
+def export_entry(repo_root: Path, reference_doc: Path, pandoc_executable: str, entry: dict) -> None:
     source_path = (repo_root / entry["source"]).resolve()
     output_path = (repo_root / entry["output"]).resolve()
     output_path.parent.mkdir(parents=True, exist_ok=True)
     command = [
-        "pandoc",
+        pandoc_executable,
         str(source_path),
         "--from=gfm",
         "--to=docx",
@@ -91,6 +123,7 @@ def main() -> int:
     repo_root = Path(__file__).resolve().parent.parent
     manifest_path = resolve_argument_path(args.manifest, repo_root)
     reference_doc = resolve_argument_path(args.reference_doc, repo_root)
+    pandoc_executable = resolve_pandoc_executable()
 
     if not reference_doc.exists():
         template_script = repo_root / "scripts" / "create_reference_template.py"
@@ -116,10 +149,11 @@ def main() -> int:
         raise SystemExit("No manifest entries matched the requested selection.")
 
     for entry in selected:
-        export_entry(repo_root, reference_doc, entry)
+        export_entry(repo_root, reference_doc, pandoc_executable, entry)
 
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
