@@ -1,136 +1,233 @@
 # Apache Spark Development with PyCharm
 
-## Installing `pyspark` in PyCharm with a `venv` environment
+## Guide
 
 You can find the official Apache Spark programming guide here:
 
 https://spark.apache.org/docs/latest/rdd-programming-guide.html
 
-This guide assumes that you already have a recent version of **PyCharm Community Edition** installed on your computer. You can download the Windows version from the following link. Instead of PyCharm, you may also use any Python IDE/editor of your choice.
+This guide assumes that you already have **PyCharm Community Edition** and **Python 3.11** installed. For `pyspark`, Python 3.11 is a safe and practical choice.
 
-https://www.jetbrains.com/pycharm/download/download-thanks.html?platform=windows&code=PCC
+PyCharm Community Edition:
 
-Download **Python 3.11** (Windows installer, 64-bit) and install it on your computer. Do **not** use the newest Python release (for example 3.13 when this guide was written), because it may not be fully compatible with PySpark.
+https://www.jetbrains.com/pycharm/download/
 
-https://www.python.org/downloads/release/python-3110/
+Python 3.11:
 
-When you launch PyCharm for the first time, choose **New Project**.
+https://www.python.org/downloads/
+
+## Creating a new project in PyCharm
+
+Open PyCharm and choose `New Project`.
 
 ![Figure 1](images/img1.png)
 
-The first time you run PyCharm, Windows Security may ask you to add the directory used by PyCharm to the exceptions list. This is useful because Windows Security can significantly slow down operations involving many files and Python package versions.
+In the new project:
 
-![Figure 2](images/img2.png)
+- choose the `Pure Python` project type
+- give it a name such as `Spark_example`
+- avoid spaces in file names and directory names
+- in `Interpreter type`, choose `Project venv`
+- as the base interpreter, choose Python 3.11
+- the `Create a welcome script` option is optional
 
-## Creating a new PyCharm project
+![Figure 2](images/img3.png)
 
-When creating a new project, you need to select the Python interpreter. Choose interpreter type **Project venv**. The goal of this option is to manage dependencies automatically and install only what the project needs. If you prefer a different package manager, you may configure it there.
+If PyCharm shows a Microsoft Defender message about folder exclusions, you may choose `Exclude folders`. This is not required for the example to run, but it usually helps IDE performance.
 
-Use `Spark_example` as the project name. It is important that **file names and directory names do not contain spaces**.
+![Figure 3](images/img2.png)
 
-Enable the option `create a welcome script`.
+## Installing Python packages
 
-Then install the required packages from: **File → Settings → Project → Python Interpreter**.
+After the project is created, install the `pyspark` and `psutil` packages in the project interpreter.
 
-![Figure 3](images/img3.png)
+You can do this either:
 
-The packages you need are `pyspark` and `psutil`. After installation, restart PyCharm once. This may not be necessary on every system, but it was required in my setup.
+- from the `Python Packages` tool window
+- from `Settings | Python | Interpreter`
+- from the built-in PyCharm terminal with `python -m pip install pyspark psutil`
+
+For this guide, you do not need to install Apache Spark separately on your computer. The `pyspark` package inside `.venv` and Java are enough.
 
 ## Installing Java on your computer
 
-From [https://jdk.java.net/23/](https://jdk.java.net/23/) download Java for your operating system (for Windows this is usually a zip archive). Extract its contents to a directory, for example under `C:\Program Files`.
+JDK 17 is required for local PySpark execution.
 
-![Figure 4](images/img4.png)
+On Windows, the simplest approach is to open a PowerShell terminal and run:
 
-This will create a directory such as `C:\Program Files\jdk-23.0.2`.
-
-You must add this directory to your system environment variables as `JAVA_HOME`.
-
-Right-click the Windows icon and choose **System**.
-
-![Figure 5](images/img5.png)
-
-Then choose **Advanced System Settings**.
-
-![Figure 6](images/img6.png)
-
-Then choose **Environment Variables**.
-
-![Figure 7](images/img7.png)
-
-Under **System variables**, choose **New** and add:
-- Variable name: `JAVA_HOME`
-- Variable value: the directory where you extracted Java (for example `C:\Program Files\jdk-23.0.2`)
-
-You will need to **restart your computer** for the environment variables to be refreshed.
-
-## Configuring PyCharm to run PySpark code
-
-To run `.py` programs, PyCharm uses **Run Configurations**, which include the parameters required to execute the Python program. For a PySpark file, you must define a few environment variables that Spark workers need in order to launch Python correctly. These variables are set in the `Environment variables` field of the run configuration, shown below.
-
-![Figure 8](images/img8.png)
-
-Use the following variables:
-
-```
-PYTHONUNBUFFERED=1;PYSPARK_DRIVER_PYTHON=C:\Users\ikons\PycharmProjects\Spark_example\.venv\Scripts\python.exe;PYSPARK_PYTHON=C:\Users\ikons\PycharmProjects\Spark_example\.venv\Scripts\python.exe;SPARK_SUBMIT_OPTS=-Djava.security.manager=allow
+```powershell
+winget install --id Microsoft.OpenJDK.17 --accept-source-agreements --accept-package-agreements
 ```
 
-Here, the path must point to the Python executable of the virtual environment created for your project. The example above is only indicative; on your system it will be different. You can find it in the interpreter settings under **File → Settings**.
+During installation, Windows may show a prompt asking to run the installer with administrator privileges. In that case, choose `Yes` to continue.
 
-Do the same for the Python console in **File → Settings → Build, Execution, Deployment → Console → Python Console** by setting the same environment variables there.
+If `winget` is not available on your machine, install any JDK 17 manually and make sure that:
 
-![Figure 9](images/img9.png)
+- `JAVA_HOME` points to the Java installation directory
+- the `java` command is available in `PATH`
 
-The first time you run your code, the firewall may ask whether to allow access. Approve it.
+If Java was installed while PyCharm was already open, close and reopen PyCharm and create a new terminal, so that the new environment variables are loaded. Normally, a full computer restart is not required. Then verify that everything works correctly:
 
-## Running a test word count example
+```powershell
+java -version
+```
 
-Create a new `.py` file, or simply replace the contents of the automatically generated `main.py` file with the following code:
+## Creating example files
+
+Create two files in the project directory: `main.py` and `text.txt`.
+
+If a welcome script was created automatically, you can simply replace its contents with the following `main.py`.
 
 ```python
-from pyspark import SparkConf
+import os
+import sys
+
 from pyspark.sql import SparkSession
-if __name__ == '__main__':
-    conf = SparkConf().setAppName("Word Count example") \
-        .set("spark.executor.memory", "2g") \
-        .set("spark.driver.memory", "2g")
 
-    sc = SparkSession.builder.config(conf=conf).getOrCreate().sparkContext
-    #sc.setLogLevel("DEBUG")
-    #sc.setLogLevel("INFO")
+os.environ["PYSPARK_PYTHON"] = sys.executable
+os.environ["PYSPARK_DRIVER_PYTHON"] = sys.executable
 
-    wordcount = sc.textFile("text.txt") \
-        .flatMap(lambda x: x.split(" ")) \
-        .map(lambda x: (x, 1)) \
-        .reduceByKey(lambda x,y: x+y) \
-        .sortBy(lambda x: x[1], ascending=False)
+
+def main() -> None:
+    spark = SparkSession.builder.appName("Word Count example").getOrCreate()
+    sc = spark.sparkContext
+
+    wordcount = (
+        sc.textFile("text.txt")
+        .flatMap(lambda line: line.split())
+        .map(lambda word: (word, 1))
+        .reduceByKey(lambda left, right: left + right)
+        .sortBy(lambda item: item[1], ascending=False)
+    )
+
     print(wordcount.collect())
+    spark.stop()
+
+
+if __name__ == "__main__":
+    main()
 ```
 
-You will also need to place a `text.txt` file in the same directory as the project's `main.py`, containing a few sample words to count. In my setup, that directory was `C:\Users\ikons\PycharmProjects\sparkExamples`.
+The two lines with `sys.executable` explicitly tell Spark to use the same Python interpreter that the project has selected in PyCharm. Because of that, for this first example you do not need to define `PYSPARK_PYTHON` and `PYSPARK_DRIVER_PYTHON` manually in Run Configurations.
 
-With the `.set()` lines you can pass parameters to the Spark executors, such as the maximum memory assigned to each one.
+Put the following sample content into `text.txt`:
 
-The `sc.setLogLevel` lines control how verbose the Spark log messages will be during execution. In the current example they are commented out, so only a few messages are shown. If you run into problems, remove the comments and increase the logging level.
+```text
+spark spark data
+big data spark
+python spark
+```
 
-Once everything is ready, you can execute the code in two ways:
+## Running and debugging in PyCharm
 
-- through the **Run Configuration** (`Run` menu or `Shift+F10`)
-- through the **Python Console** on the left side of the IDE (highlighted in red in the following figure)
+Open `main.py` and run the program in one of the following ways:
 
-![Figure 10](images/img10.png)
+- from the green `Run` icon in the gutter
+- by right-clicking the file and choosing `Run 'main'`
+- with the shortcut `Shift+F10`
 
-The first time you execute it, your operating system security software (for example Windows Defender) may ask you to approve a security exception. Choose `OK`.
+For debugging:
 
-Through the **Python Console** you can execute transformations interactively, without restarting the entire Spark engine after every code change. It is similar in spirit to the Spark shell on the command line.
+- press the `Debug` icon in the gutter
+- or right-click and choose `Debug 'main'`
 
-The Python Console also lets you inspect the variables created by Spark and verify that their contents are correct (shown on the right side of the figure below).
+For this simple example, you do not need to create a manual Run Configuration with environment variables. PyCharm can automatically create a temporary run/debug configuration for the current file, and that is enough.
 
-![Figure 11](images/img11.png)
+The first time you run the program, Windows Firewall / Windows Defender may show a prompt for `OpenJDK Platform binary`. If it appears, choose `Allow`, so that Spark can open the local port it needs.
 
-Another useful way to monitor what is happening is the URL where the Spark scheduler UI runs. In the example below, an RDD transformation is executed from the console and can be observed at [http://localhost:4040](http://localhost:4040). When you close the console, the web UI also stops.
+If everything is configured correctly, you should see output such as:
 
-![Figure 12](images/img12.png)
+```text
+[('spark', 4), ('data', 2), ('big', 1), ('python', 1)]
+```
 
-![Figure 13](images/img13.png)
+## Experimenting with `pyspark`
+
+If you want to experiment interactively with Spark, you have two practical options:
+
+- `pyspark`, which opens a ready-to-use shell with `sc` and `spark` already available, but on Windows it often does not provide convenient command history with the `Up` / `Down` keys
+- the regular Python console that you open with `python`, which usually has more convenient history and editing, but requires you to create the `SparkSession` manually
+
+Note: `pyspark` is for Python, while `spark-shell` is the Scala shell. The command `sparkshell` without a dash is not valid.
+
+### Option 1: `pyspark`
+
+`pyspark` is the quickest option if you want to start immediately with `sc` and `spark` ready to use.
+
+After activating `.venv` and confirming that `java -version` works, run the following in the terminal:
+
+```powershell
+$env:PYSPARK_PYTHON = (Resolve-Path .\.venv\Scripts\python.exe).Path
+$env:PYSPARK_DRIVER_PYTHON = $env:PYSPARK_PYTHON
+pyspark
+```
+
+Once the shell opens, you can try commands such as:
+
+```python
+sc.parallelize([1, 2, 3]).count()
+spark.range(5).show()
+```
+
+To exit the shell:
+
+```python
+exit()
+```
+
+### Option 2: open the regular Python console from the terminal
+
+If you prefer better command history and a more predictable terminal experience, you can first open the regular Python console:
+
+```powershell
+python
+```
+
+and then create the Spark session manually:
+
+```python
+import os
+import sys
+from pyspark.sql import SparkSession
+
+os.environ["PYSPARK_PYTHON"] = sys.executable
+os.environ["PYSPARK_DRIVER_PYTHON"] = sys.executable
+
+spark = SparkSession.builder.appName("playground").getOrCreate()
+sc = spark.sparkContext
+```
+
+After that, you can experiment with commands such as:
+
+```python
+sc.parallelize([1, 2, 3]).count()
+spark.range(5).show()
+```
+
+When you are done:
+
+```python
+spark.stop()
+exit()
+```
+
+## Checking the Spark UI
+
+While the program is running, you can usually monitor the Spark UI at:
+
+[http://localhost:4040](http://localhost:4040)
+
+Once you stop the program, the corresponding Spark UI web server also stops.
+
+The exact appearance of the Spark UI may differ slightly depending on the Spark version, but the general idea remains the same.
+
+![Figure 4](images/img13.png)
+
+## Useful notes
+
+- If `java -version` does not work immediately after installation, close and reopen PyCharm and create a new terminal.
+- If the project is not using the correct `.venv`, check `Settings | Python | Interpreter` again.
+- If you see warnings about `winutils.exe` or `NativeCodeLoader`, you can ignore them for this simple local Windows example.
+- If `text.txt` is not located in the correct directory, the program will fail because it cannot find it.
+- If port `4040` is already in use, Spark may start the UI on another port such as `4041`.
+- PyCharm's `Python Console` is useful for more advanced interactive use, but it is not required for this first example.
