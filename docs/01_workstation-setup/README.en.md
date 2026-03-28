@@ -206,9 +206,9 @@ The most practical and tested route in the course is to use `winget`.
 From PowerShell:
 
 ```powershell
-winget install --id Python.Python.3.11 -e
-winget install --id Git.Git -e
-winget install --id Microsoft.OpenJDK.17 --accept-source-agreements --accept-package-agreements
+winget install --id Python.Python.3.11 -e --source winget --accept-source-agreements --accept-package-agreements
+winget install --id Git.Git -e --source winget --accept-source-agreements --accept-package-agreements
+winget install --id Microsoft.OpenJDK.17 -e --source winget --accept-source-agreements --accept-package-agreements
 ```
 
 After the installation, close the terminal, open a new PowerShell window, and verify:
