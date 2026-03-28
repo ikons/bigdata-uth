@@ -267,7 +267,7 @@ C:\Users\<windows-username>\OpenVPN\config
 
 ```bash
 sudo apt update
-sudo apt install -y git curl tar openjdk-11-jdk
+sudo apt install -y git curl tar openjdk-11-jdk python3-pip python3-venv
 git --version
 java -version
 ```
@@ -326,8 +326,8 @@ chmod 600 ~/.kube/config
 ```bash
 kubectl config current-context
 kubectl config get-contexts
-kubectl config view --minify --flatten | sed -n '1,40p'
-kubectl get ns
+kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}{"\n"}'
+kubectl -n <username>-priv get sa spark
 ```
 
 Στη ρύθμιση που δημιουργεί το provisioning tool του εργαστηρίου:
@@ -375,4 +375,6 @@ cd bigdata-uth
 - Για `02` και `03`, μπορείτε να δουλέψετε είτε από PowerShell είτε από WSL.
 - Για `04` και `05`, δουλεύετε μόνο από WSL.
 - Αν ξεκινήσετε τοπικά από Windows, μπορείτε αργότερα να κάνετε δεύτερο clone στο WSL μόνο για την απομακρυσμένη διαδρομή.
+
+
 

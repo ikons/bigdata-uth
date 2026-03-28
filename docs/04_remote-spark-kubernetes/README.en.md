@@ -44,9 +44,12 @@ The installation steps for `OpenVPN`, `kubectl`, and the initial `~/.kube/config
 
 ## 1. Check Java, Spark, and Hadoop in WSL
 
-The baseline WSL installation belongs in `01_workstation-setup`. Here we assume the environment already exists and simply verify that the expected binaries are visible.
+The baseline WSL installation belongs in `01_workstation-setup`. If this is your first pass through this guide, go to step `2` first, create the shared `~/bigdata-env.sh` file, and then return here.
+
+If the environment is already in place, load it first and then verify that the expected binaries are visible.
 
 ```bash
+. ~/.profile
 java -version
 command -v spark-submit
 command -v hdfs
@@ -131,8 +134,8 @@ Then verify:
 
 ```bash
 kubectl config current-context
-kubectl config view --minify --flatten | sed -n '1,80p'
-kubectl get ns
+kubectl config get-contexts
+kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}{"\n"}'
 ```
 
 The Kubernetes API endpoint must not be copied from stale screenshots. It must come from the kubeconfig provided by the lab.
@@ -143,7 +146,7 @@ For the WSL path, also verify DNS and HDFS reachability:
 
 ```bash
 getent hosts source-code-master.cluster.local
-getent hosts hdfs-namenode
+getent hosts hdfs-namenode.default.svc.cluster.local
 kubectl -n YOUR_USERNAME-priv get sa spark
 ```
 
@@ -163,7 +166,7 @@ Put this inside:
 <configuration>
   <property>
     <name>fs.defaultFS</name>
-    <value>hdfs://hdfs-namenode:9000</value>
+    <value>hdfs://hdfs-namenode.default.svc.cluster.local:9000</value>
   </property>
 </configuration>
 ```
@@ -203,8 +206,8 @@ spark.kubernetes.container.image               apache/spark:3.5.8-scala2.12-java
 spark.executor.instances                       1
 spark.kubernetes.submission.waitAppCompletion  false
 spark.eventLog.enabled                         true
-spark.eventLog.dir                             hdfs://hdfs-namenode:9000/user/YOUR_USERNAME/logs
-spark.history.fs.logDirectory                  hdfs://hdfs-namenode:9000/user/YOUR_USERNAME/logs
+spark.eventLog.dir                             hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/YOUR_USERNAME/logs
+spark.history.fs.logDirectory                  hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/YOUR_USERNAME/logs
 ```
 <!-- END AUTO-CODE -->
 
@@ -236,8 +239,8 @@ The cleanup line is optional, but useful when you repeat the walkthrough and wan
 Once `spark-defaults.conf` is configured, the first submit becomes very simple:
 
 ```bash
-spark-submit hdfs://hdfs-namenode:9000/user/$USER/code/wordcount.py \
-  --base-path hdfs://hdfs-namenode:9000/user/$USER
+spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER/code/wordcount.py \
+  --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER
 ```
 
 The canonical code for the example is:
@@ -408,7 +411,7 @@ First check:
 
 ```bash
 getent hosts source-code-master.cluster.local
-getent hosts hdfs-namenode
+getent hosts hdfs-namenode.default.svc.cluster.local
 ```
 
 If these do not resolve, the problem is in the VPN or the WSL DNS path, not in the Spark script.
@@ -416,3 +419,5 @@ If these do not resolve, the problem is in the VPN or the WSL DNS path, not in t
 ## What comes next
 
 Once the first remote submit works, continue to the guide for [the same queries on the cluster](../05_cluster-queries-rdd-df-sql/README.en.md), where we run the same `Q1-Q3` questions with `RDD`, the `DataFrame API`, and `Spark SQL`.
+
+

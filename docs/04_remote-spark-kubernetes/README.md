@@ -44,9 +44,12 @@
 
 ## 1. Έλεγχος Java, Spark και Hadoop στο WSL
 
-Οι βασικές εγκαταστάσεις του WSL ανήκουν στον `01_workstation-setup`. Εδώ υποθέτουμε ότι έχει ήδη στηθεί το περιβάλλον και απλώς επιβεβαιώνουμε ότι βλέπετε τα σωστά binaries.
+Οι βασικές εγκαταστάσεις του WSL ανήκουν στον `01_workstation-setup`. Αν είναι η πρώτη φορά που περνάτε αυτόν τον οδηγό, πηγαίνετε πρώτα στο βήμα `2`, δημιουργήστε το κοινό αρχείο `~/bigdata-env.sh` και μετά επιστρέψτε εδώ.
+
+Αν το περιβάλλον έχει ήδη στηθεί, φορτώστε το πρώτα και μετά επιβεβαιώστε ότι βλέπετε τα σωστά binaries:
 
 ```bash
+. ~/.profile
 java -version
 command -v spark-submit
 command -v hdfs
@@ -131,8 +134,8 @@ cp /path/to/config ~/.kube/config
 
 ```bash
 kubectl config current-context
-kubectl config view --minify --flatten | sed -n '1,80p'
-kubectl get ns
+kubectl config get-contexts
+kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}{"\n"}'
 ```
 
 Το endpoint του Kubernetes API δεν πρέπει να αντιγράφεται από παλιά screenshots. Πρέπει να προκύπτει από το kubeconfig που έδωσε το εργαστήριο.
@@ -143,7 +146,7 @@ kubectl get ns
 
 ```bash
 getent hosts source-code-master.cluster.local
-getent hosts hdfs-namenode
+getent hosts hdfs-namenode.default.svc.cluster.local
 kubectl -n YOUR_USERNAME-priv get sa spark
 ```
 
@@ -163,7 +166,7 @@ nano ~/.hadoop/conf/core-site.xml
 <configuration>
   <property>
     <name>fs.defaultFS</name>
-    <value>hdfs://hdfs-namenode:9000</value>
+    <value>hdfs://hdfs-namenode.default.svc.cluster.local:9000</value>
   </property>
 </configuration>
 ```
@@ -203,8 +206,8 @@ spark.kubernetes.container.image               apache/spark:3.5.8-scala2.12-java
 spark.executor.instances                       1
 spark.kubernetes.submission.waitAppCompletion  false
 spark.eventLog.enabled                         true
-spark.eventLog.dir                             hdfs://hdfs-namenode:9000/user/YOUR_USERNAME/logs
-spark.history.fs.logDirectory                  hdfs://hdfs-namenode:9000/user/YOUR_USERNAME/logs
+spark.eventLog.dir                             hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/YOUR_USERNAME/logs
+spark.history.fs.logDirectory                  hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/YOUR_USERNAME/logs
 ```
 <!-- END AUTO-CODE -->
 
@@ -236,8 +239,8 @@ hdfs dfs -ls /user/$USER/code
 Αφού το `spark-defaults.conf` είναι ήδη ρυθμισμένο, το πρώτο submit μένει πολύ απλό:
 
 ```bash
-spark-submit hdfs://hdfs-namenode:9000/user/$USER/code/wordcount.py \
-  --base-path hdfs://hdfs-namenode:9000/user/$USER
+spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER/code/wordcount.py \
+  --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER
 ```
 
 Ο βασικός κώδικας του παραδείγματος είναι:
@@ -408,7 +411,7 @@ test -f "$SPARK_CONF_DIR/spark-defaults.conf" && sed -n '1,80p' "$SPARK_CONF_DIR
 
 ```bash
 getent hosts source-code-master.cluster.local
-getent hosts hdfs-namenode
+getent hosts hdfs-namenode.default.svc.cluster.local
 ```
 
 Αν αυτά δεν λύνουν, το πρόβλημα είναι στο VPN ή στην αλυσίδα επίλυσης DNS του WSL, όχι στο Spark script.
@@ -416,3 +419,5 @@ getent hosts hdfs-namenode
 ## Τι ακολουθεί
 
 Αφού περάσει το πρώτο απομακρυσμένο submit, προχωρήστε στον οδηγό [ίδιων ερωτημάτων στη συστοιχία](../05_cluster-queries-rdd-df-sql/README.md), όπου εκτελούμε τα ίδια `Q1-Q3` ερωτήματα με `RDD`, `DataFrame API` και `Spark SQL`.
+
+

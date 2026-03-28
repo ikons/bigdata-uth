@@ -129,8 +129,8 @@ deactivate 2>/dev/null || true
 source ~/bigdata-env.sh
 hash -r
 spark-submit \
-    hdfs://hdfs-namenode:9000/user/$USER/code/wordcount.py \
-    --base-path hdfs://hdfs-namenode:9000/user/$USER
+    hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER/code/wordcount.py \
+    --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER
 ```
 
 ---
@@ -179,8 +179,8 @@ hadoop fs -ls /user/$USER/code
 deactivate 2>/dev/null || true
 source ~/bigdata-env.sh
 hash -r
-spark-submit hdfs://hdfs-namenode:9000/user/$USER/code/RddQ1.py \
-  --base-path hdfs://hdfs-namenode:9000/user/$USER
+spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER/code/RddQ1.py \
+  --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER
 ```
 
 Η παραπάνω μορφή υποθέτει ότι στο WSL έχει ήδη ρυθμιστεί το per-user `spark-defaults.conf` του [04_remote-spark-kubernetes](docs/04_remote-spark-kubernetes).

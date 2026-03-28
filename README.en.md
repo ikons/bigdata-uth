@@ -128,8 +128,8 @@ deactivate 2>/dev/null || true
 source ~/bigdata-env.sh
 hash -r
 spark-submit \
-    hdfs://hdfs-namenode:9000/user/$USER/code/wordcount.py \
-    --base-path hdfs://hdfs-namenode:9000/user/$USER
+    hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER/code/wordcount.py \
+    --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER
 ```
 
 ---
@@ -178,8 +178,8 @@ Example:
 deactivate 2>/dev/null || true
 source ~/bigdata-env.sh
 hash -r
-spark-submit hdfs://hdfs-namenode:9000/user/$USER/code/RddQ1.py \
-  --base-path hdfs://hdfs-namenode:9000/user/$USER
+spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER/code/RddQ1.py \
+  --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER
 ```
 
 This form assumes that your WSL already uses the per-user `spark-defaults.conf` from [04_remote-spark-kubernetes](docs/04_remote-spark-kubernetes).

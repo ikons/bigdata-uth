@@ -94,8 +94,8 @@ hadoop fs -ls /user/$USER/code
 Το κοινό μοτίβο εκτέλεσης για όλα τα βασικά scripts είναι:
 
 ```bash
-spark-submit hdfs://hdfs-namenode:9000/user/$USER/code/<script>.py \
-  --base-path hdfs://hdfs-namenode:9000/user/$USER
+spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER/code/<script>.py \
+  --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER
 ```
 
 Με αυτό:
@@ -112,8 +112,8 @@ spark-submit hdfs://hdfs-namenode:9000/user/$USER/code/<script>.py \
 ## Εισαγωγικό παράδειγμα: Word Count
 
 ```bash
-spark-submit hdfs://hdfs-namenode:9000/user/$USER/code/wordcount.py \
-  --base-path hdfs://hdfs-namenode:9000/user/$USER
+spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER/code/wordcount.py \
+  --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER
 ```
 
 <!-- AUTO-CODE: code/wordcount.py -->
@@ -238,8 +238,8 @@ if __name__ == "__main__":
 ### Q1 με RDD
 
 ```bash
-spark-submit hdfs://hdfs-namenode:9000/user/$USER/code/RddQ1.py \
-  --base-path hdfs://hdfs-namenode:9000/user/$USER
+spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER/code/RddQ1.py \
+  --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER
 ```
 
 <!-- AUTO-CODE: code/RddQ1.py -->
@@ -341,8 +341,8 @@ if __name__ == "__main__":
 ### Q1 με DataFrame API
 
 ```bash
-spark-submit hdfs://hdfs-namenode:9000/user/$USER/code/DFQ1.py \
-  --base-path hdfs://hdfs-namenode:9000/user/$USER
+spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER/code/DFQ1.py \
+  --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER
 ```
 
 <!-- AUTO-CODE: code/DFQ1.py -->
@@ -453,8 +453,8 @@ if __name__ == "__main__":
 ### Q1 με Spark SQL
 
 ```bash
-spark-submit hdfs://hdfs-namenode:9000/user/$USER/code/SQLQ1.py \
-  --base-path hdfs://hdfs-namenode:9000/user/$USER
+spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER/code/SQLQ1.py \
+  --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER
 ```
 
 <!-- AUTO-CODE: code/SQLQ1.py -->
@@ -577,8 +577,8 @@ if __name__ == "__main__":
 ### Q2 με RDD
 
 ```bash
-spark-submit hdfs://hdfs-namenode:9000/user/$USER/code/RddQ2.py \
-  --base-path hdfs://hdfs-namenode:9000/user/$USER
+spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER/code/RddQ2.py \
+  --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER
 ```
 
 <!-- AUTO-CODE: code/RddQ2.py -->
@@ -691,8 +691,8 @@ if __name__ == "__main__":
 ### Q2 με DataFrame API
 
 ```bash
-spark-submit hdfs://hdfs-namenode:9000/user/$USER/code/DFQ2.py \
-  --base-path hdfs://hdfs-namenode:9000/user/$USER
+spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER/code/DFQ2.py \
+  --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER
 ```
 
 <!-- AUTO-CODE: code/DFQ2.py -->
@@ -820,8 +820,8 @@ if __name__ == "__main__":
 ### Q2 με Spark SQL
 
 ```bash
-spark-submit hdfs://hdfs-namenode:9000/user/$USER/code/SQLQ2.py \
-  --base-path hdfs://hdfs-namenode:9000/user/$USER
+spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER/code/SQLQ2.py \
+  --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER
 ```
 
 <!-- AUTO-CODE: code/SQLQ2.py -->
@@ -958,8 +958,8 @@ if __name__ == "__main__":
 ### Q3 με RDD
 
 ```bash
-spark-submit hdfs://hdfs-namenode:9000/user/$USER/code/RddQ3.py \
-  --base-path hdfs://hdfs-namenode:9000/user/$USER
+spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER/code/RddQ3.py \
+  --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER
 ```
 
 <!-- AUTO-CODE: code/RddQ3.py -->
@@ -1058,8 +1058,8 @@ if __name__ == "__main__":
 ### Q3 με DataFrame API
 
 ```bash
-spark-submit hdfs://hdfs-namenode:9000/user/$USER/code/DFQ3.py \
-  --base-path hdfs://hdfs-namenode:9000/user/$USER
+spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER/code/DFQ3.py \
+  --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER
 ```
 
 <!-- AUTO-CODE: code/DFQ3.py -->
@@ -1168,8 +1168,8 @@ if __name__ == "__main__":
 ### Q3 με Spark SQL
 
 ```bash
-spark-submit hdfs://hdfs-namenode:9000/user/$USER/code/SQLQ3.py \
-  --base-path hdfs://hdfs-namenode:9000/user/$USER
+spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER/code/SQLQ3.py \
+  --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER
 ```
 
 <!-- AUTO-CODE: code/SQLQ3.py -->
@@ -1285,8 +1285,8 @@ if __name__ == "__main__":
 Αυτό είναι επιπλέον tabular example και δεν ανήκει στον βασικό κορμό `Q1-Q3`.
 
 ```bash
-spark-submit hdfs://hdfs-namenode:9000/user/$USER/code/DF2b.py \
-  --base-path hdfs://hdfs-namenode:9000/user/$USER
+spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER/code/DF2b.py \
+  --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER
 ```
 
 <!-- AUTO-CODE: code/DF2b.py -->
@@ -1415,8 +1415,8 @@ if __name__ == "__main__":
 Το `DFQ3_udf.py` κρατιέται ως επιπλέον παράδειγμα και όχι ως βασική DataFrame υλοποίηση του `Q3`.
 
 ```bash
-spark-submit hdfs://hdfs-namenode:9000/user/$USER/code/DFQ3_udf.py \
-  --base-path hdfs://hdfs-namenode:9000/user/$USER
+spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER/code/DFQ3_udf.py \
+  --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER
 ```
 
 <!-- AUTO-CODE: code/DFQ3_udf.py -->
