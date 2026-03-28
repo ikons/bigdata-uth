@@ -1,6 +1,9 @@
 from pyspark.sql import SparkSession
 
-# Create SparkContext
+# This file is a small join demo built from in-memory Python data.
+# It is useful for understanding the mechanics of RDD joins before reading CSV files.
+
+# Create the SparkContext.
 sc = SparkSession \
     .builder \
     .appName("Join Datasets with RDD") \
@@ -33,6 +36,7 @@ data_b = [
 # Create RDDs
 # --------------------------
 
+# parallelize() creates RDDs directly from Python collections that already exist in memory.
 rdd_a = sc.parallelize(data_a)
 rdd_b = sc.parallelize(data_b)
 
@@ -40,8 +44,8 @@ rdd_b = sc.parallelize(data_b)
 # Prepare for join
 # --------------------------
 
-# Create key-value pairs using department_id as the key
-# and add a dataset tag (1 for A, 2 for B)
+# Create key-value pairs using department_id as the key.
+# The dataset tag tells us later whether a row came from the employee side or the department side.
 
 # From Dataset A:
 # (department_id, (1, (employee_id, employee_name, department_id)))
@@ -55,14 +59,15 @@ right = rdd_b.map(lambda x: (x[0], (2, x)))
 # Union the two RDDs
 # --------------------------
 
-# Use union so that all records end up in the same RDD
+# union() simply concatenates the two keyed datasets into one RDD.
 unioned_data = left.union(right)
 
 # --------------------------
 # Group by department_id
 # --------------------------
 
-# Records with the same department_id are grouped together
+# groupByKey() brings together all rows that share the same department_id.
+# This is a very explicit teaching approach for understanding joins, even if it is not the most efficient one.
 grouped = unioned_data.groupByKey()
 
 # --------------------------
@@ -79,16 +84,18 @@ def arrange(records):
         elif source_id == 2:
             right_origin.append(value)
 
-    # Return every employee/department-name combination
+    # Return every employee/department-name combination for one department id.
     return [(employee, dept) for employee in left_origin for dept in right_origin]
 
 # --------------------------
 # Final join result
 # --------------------------
 
-# Use flatMapValues to unroll the results
+# flatMapValues() keeps the key and emits one output row for every join match.
+# The final shape is similar to a join result produced by relational systems.
 joined = grouped.flatMapValues(lambda x: arrange(x))
 
+# collect() is safe here because the in-memory demo is tiny.
 # Returns: (department_id, ((employee_id, name, dept_id), (dept_id, dept_name)))
 for record in joined.collect():
     print(record)

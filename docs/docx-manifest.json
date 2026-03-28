@@ -1,74 +1,86 @@
 [
   {
     "id": "preparatory-el",
-    "source": "docs/00_Preparatory-lab/README.md",
-    "output": "odigoi/0_Preparatory_lab_Docker_Desktop-wsl.docx",
+    "source": "docs/01_workstation-setup/README.md",
+    "output": "odigoi/01_workstation_setup.docx",
     "tocTitle": "Περιεχόμενα"
   },
   {
     "id": "preparatory-en",
-    "source": "docs/00_Preparatory-lab/README.en.md",
-    "output": "odigoi/0_Preparatory_lab_Docker_Desktop-wsl.en.docx",
+    "source": "docs/01_workstation-setup/README.en.md",
+    "output": "odigoi/01_workstation_setup.en.docx",
     "tocTitle": "Table of Contents"
   },
   {
     "id": "pycharm-el",
-    "source": "docs/00_pycharm/README.md",
-    "output": "odigoi/0_pycharm_spark_implementation.docx",
+    "source": "docs/02_pycharm-local-authoring/README.md",
+    "output": "odigoi/02_pycharm_local_authoring.docx",
     "tocTitle": "Περιεχόμενα"
   },
   {
     "id": "pycharm-en",
-    "source": "docs/00_pycharm/README.en.md",
-    "output": "odigoi/0_pycharm_spark_implementation.en.docx",
+    "source": "docs/02_pycharm-local-authoring/README.en.md",
+    "output": "odigoi/02_pycharm_local_authoring.en.docx",
     "tocTitle": "Table of Contents"
   },
   {
     "id": "vscode-el",
-    "source": "docs/00_vscode/README.md",
-    "output": "odigoi/0_vscode_spark_implementation.docx",
+    "source": "docs/02_vscode-local-authoring/README.md",
+    "output": "odigoi/02_vscode_local_authoring.docx",
     "tocTitle": "Περιεχόμενα"
   },
   {
     "id": "vscode-en",
-    "source": "docs/00_vscode/README.en.md",
-    "output": "odigoi/0_vscode_spark_implementation.en.docx",
+    "source": "docs/02_vscode-local-authoring/README.en.md",
+    "output": "odigoi/02_vscode_local_authoring.en.docx",
+    "tocTitle": "Table of Contents"
+  },
+  {
+    "id": "local-spark-el",
+    "source": "docs/03_local-spark-workbook/README.md",
+    "output": "odigoi/03_local_spark_workbook.docx",
+    "tocTitle": "Περιεχόμενα"
+  },
+  {
+    "id": "local-spark-en",
+    "source": "docs/03_local-spark-workbook/README.en.md",
+    "output": "odigoi/03_local_spark_workbook.en.docx",
     "tocTitle": "Table of Contents"
   },
   {
     "id": "lab1-docker-el",
-    "source": "docs/01_lab1-docker/README.md",
-    "output": "odigoi/01_lab1-docker.docx",
+    "source": "docs/06_local-cluster-infrastructure-docker/README.md",
+    "output": "odigoi/06_local_cluster_infrastructure_docker.docx",
     "tocTitle": "Περιεχόμενα"
   },
   {
     "id": "lab1-docker-en",
-    "source": "docs/01_lab1-docker/README.en.md",
-    "output": "odigoi/01_lab1-docker.en.docx",
+    "source": "docs/06_local-cluster-infrastructure-docker/README.en.md",
+    "output": "odigoi/06_local_cluster_infrastructure_docker.en.docx",
     "tocTitle": "Table of Contents"
   },
   {
     "id": "lab1-k8s-el",
-    "source": "docs/01_lab1-k8s/README.md",
-    "output": "odigoi/01_lab1-k8s.docx",
+    "source": "docs/04_remote-spark-kubernetes/README.md",
+    "output": "odigoi/04_remote_spark_kubernetes.docx",
     "tocTitle": "Περιεχόμενα"
   },
   {
     "id": "lab1-k8s-en",
-    "source": "docs/01_lab1-k8s/README.en.md",
-    "output": "odigoi/01_lab1-k8s.en.docx",
+    "source": "docs/04_remote-spark-kubernetes/README.en.md",
+    "output": "odigoi/04_remote_spark_kubernetes.en.docx",
     "tocTitle": "Table of Contents"
   },
   {
     "id": "lab2-el",
-    "source": "docs/02_lab2/README.md",
-    "output": "odigoi/02_lab2.docx",
+    "source": "docs/05_cluster-queries-rdd-df-sql/README.md",
+    "output": "odigoi/05_cluster_queries_rdd_df_sql.docx",
     "tocTitle": "Περιεχόμενα"
   },
   {
     "id": "lab2-en",
-    "source": "docs/02_lab2/README.en.md",
-    "output": "odigoi/02_lab2.en.docx",
+    "source": "docs/05_cluster-queries-rdd-df-sql/README.en.md",
+    "output": "odigoi/05_cluster_queries_rdd_df_sql.en.docx",
     "tocTitle": "Table of Contents"
   }
 ]

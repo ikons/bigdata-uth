@@ -1,10 +1,22 @@
-FROM apache/spark
+FROM apache/spark:3.5.8-scala2.12-java11-python3-ubuntu
+
+# Use root so the image can install the shared Spark config and startup script.
 USER root
+
+# The worker entrypoint connects this container to the standalone Spark master.
 COPY worker.sh /worker.sh
 RUN chmod +x /worker.sh
+
+# Reuse the same Spark defaults as the master so all Spark containers
+# point to the same master and the same event-log destination.
 RUN mkdir -p /opt/spark/conf
 COPY spark-defaults.conf /opt/spark/conf/spark-defaults.conf
+
 ENV SPARK_WORKER_LOG=/opt/spark/logs
 ENV SPARK_WORKER_WEBUI_PORT=8081
+
+# Each worker publishes its own web UI. Docker Compose maps every worker
+# to a different host port so students can inspect them separately.
 EXPOSE 8081
+
 CMD ["/bin/bash", "-c", "/worker.sh"]

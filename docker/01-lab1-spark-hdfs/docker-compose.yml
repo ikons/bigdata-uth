@@ -1,4 +1,9 @@
-
+# Local Spark + HDFS lab stack:
+# - 1 HDFS NameNode
+# - 3 HDFS DataNodes
+# - 1 Spark master
+# - 4 Spark workers
+# - named volumes for persistent HDFS state and simple file upload paths
 services:
   # ===================== HADOOP HDFS =====================
   namenode:
@@ -12,8 +17,8 @@ services:
       - CLUSTER_NAME=hadoop-cluster
       - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
     volumes:
-      - namenode_data:/hadoop/dfs/name #Αποθηκεύει σε μόνιμο τόμο τα περιεχόμενα το σύστημα αρχείων του namenode
-      - namenode-upload:/mnt/upload #Μόνιμος τόμος που χρησιμοποιείται για να ανεβάζουμε αρχεία στο hdfs μέσω του namenode container
+      - namenode_data:/hadoop/dfs/name # Persist the HDFS namespace metadata across restarts.
+      - namenode-upload:/mnt/upload # Host-to-container upload area used before copying files into HDFS.
     networks:
       - hadoop-net
 
@@ -24,7 +29,7 @@ services:
     environment:
       - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
     volumes:
-      - datanode1_data:/hadoop/dfs/data #Μόνιμος τόμος που περιέχει τα blocks του datanode1
+      - datanode1_data:/hadoop/dfs/data # Persist the HDFS blocks stored by datanode1.
     depends_on:
       - namenode
     networks:
@@ -37,7 +42,7 @@ services:
     environment:
       - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
     volumes:
-      - datanode2_data:/hadoop/dfs/data #Μόνιμος τόμος που περιέχει τα blocks του datanode2
+      - datanode2_data:/hadoop/dfs/data # Persist the HDFS blocks stored by datanode2.
     depends_on:
       - namenode
     networks:
@@ -50,7 +55,7 @@ services:
     environment:
       - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
     volumes:
-      - datanode3_data:/hadoop/dfs/data #Μόνιμος τόμος που περιέχει τα blocks του datanode3
+      - datanode3_data:/hadoop/dfs/data # Persist the HDFS blocks stored by datanode3.
     depends_on:
       - namenode
     networks:
@@ -71,7 +76,7 @@ services:
       - SPARK_MASTER_HOST=spark-master
       - SPARK_HOME=/opt/spark
     volumes:
-      - spark-master-upload:/mnt/upload  # Μόνιμος τόμος για την εκτέλεση τοπικών αρχείων python από το μηχάνημα host (windows)
+      - spark-master-upload:/mnt/upload  # Upload area for Spark jobs copied from the host into the master container.
     networks:
       - hadoop-net
     depends_on:
@@ -146,6 +151,7 @@ services:
       - hadoop-net
 
 volumes:
+  # Named volumes keep state outside container lifetimes.
   namenode_data:
   namenode-upload:
   datanode1_data:
@@ -154,4 +160,6 @@ volumes:
   spark-master-upload:
 
 networks:
+  # Every container joins the same bridge network so service names such as
+  # `namenode` and `spark-master` become resolvable hostnames inside the stack.
   hadoop-net:
