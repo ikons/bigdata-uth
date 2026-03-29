@@ -1,13 +1,8 @@
 # Local Spark + HDFS cluster with Docker Compose
 
-This is the only guide where the student sets up a full Spark + HDFS cluster from scratch.
+In this guide, students build a small but complete Spark + HDFS cluster from scratch on their own machine with Docker Compose. The goal is not only to run prepared examples, but also to understand which pieces are required for such an environment and how they work together.
 
-The guide documents the commands for WSL. Most of the steps could also be adapted to PowerShell, but we intentionally do not do that here because it would double the shell complexity of the workflow.
-
-In the other guides:
-
-- students either run local Spark jobs without setting up a cluster
-- or they use the ready Kubernetes cluster provided by the lab
+As you go through the steps, you will see the role of the NameNode, the DataNodes, the Spark master, and the Spark workers in practice, initialize HDFS, upload code and data, and execute jobs on the cluster. The commands are documented for WSL so that the workflow stays consistent and simple throughout the lab.
 
 ## HDFS and Spark architecture
 
@@ -142,7 +137,7 @@ In other words:
 docker compose up --build -d
 ```
 
-The first execution may take 1–2 minutes, depending on your internet connection and computer speed, because Docker must pull the required images, build the custom images, and start the containers.
+The first execution may take several minutes, especially if Docker Desktop has just started or if the larger images still need to be downloaded. If it seems slow, first confirm that `docker version` works from inside the WSL terminal and give Docker Desktop a little time to finish its startup sequence.
 
 If everything works correctly, Docker Desktop will show the stack as running (green dot).
 
@@ -293,30 +288,125 @@ The following command prints the contents of the remote `wordcount.py` file as s
 docker exec spark-master cat /mnt/upload/wordcount.py
 ```
 
-```python
-from pyspark import SparkConf
+The script we use here is now the same shared repository script that can run either locally or on a cluster, depending on the `--base-path` we pass to it:
+
+<!-- AUTO-CODE: code/wordcount.py -->
+``` python
+from __future__ import annotations
+
+import argparse
+import os
+import sys
+
 from pyspark.sql import SparkSession
-conf = SparkConf().setAppName("Word Count example") \
-    .set("spark.master", "spark://spark-master:7077") \
-    .set("spark.executor.memory", "3g") \
-    .set("spark.driver.memory", "512m")
-sc = SparkSession.builder.config(conf=conf).getOrCreate().sparkContext
-wordcount = sc.textFile("hdfs://namenode:9000/user/root/text.txt") \
-    .flatMap(lambda x: x.split(" ")) \
-    .map(lambda x: (x, 1)) \
-    .reduceByKey(lambda x,y: x+y) \
-    .sortBy(lambda x: x[1], ascending=False)
-print(wordcount.collect())
-wordcount.saveAsTextFile("hdfs://namenode:9000/user/root/wordcount-output")
+
+# Keep the Python executable the same on the driver and on Spark workers.
+# This avoids subtle version mismatches when the same script runs locally or on a cluster.
+os.environ["PYSPARK_PYTHON"] = sys.executable
+os.environ["PYSPARK_DRIVER_PYTHON"] = sys.executable
+
+
+def build_path(base_path: str, relative_path: str) -> str:
+    return f"{base_path.rstrip('/')}/{relative_path.lstrip('/')}"
+
+
+def write_local_text_output(output_path: str, lines: list[str]) -> None:
+    os.makedirs(output_path, exist_ok=True)
+    output_file = os.path.join(output_path, "part-00000")
+    with open(output_file, "w", encoding="utf-8") as file_handle:
+        for line in lines:
+            file_handle.write(f"{line}\n")
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Count word frequencies from a text file with Spark.",
+    )
+    parser.add_argument(
+        "--base-path",
+        help="Base path that contains examples/ and where outputs should be written.",
+    )
+    parser.add_argument(
+        "--input",
+        help="Explicit input text path. Defaults to examples/text.txt locally or <base-path>/examples/text.txt remotely.",
+    )
+    parser.add_argument(
+        "--output",
+        help="Explicit output path. If omitted, local runs only print results and remote runs write under <base-path>.",
+    )
+    parser.add_argument(
+        "--master",
+        help="Optional Spark master. Local runs default to local[*] when no remote path is used.",
+    )
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    input_path = args.input or (
+        build_path(args.base_path, "examples/text.txt")
+        if args.base_path
+        else "examples/text.txt"
+    )
+
+    builder = SparkSession.builder.appName("wordcount example")
+    # Reuse the same script in two contexts:
+    # - local files -> start a local Spark session
+    # - remote URIs -> let spark-submit use the external cluster configuration
+    if args.master:
+        builder = builder.master(args.master)
+        if args.master.startswith("local"):
+            builder = builder.config("spark.submit.deployMode", "client")
+    elif "://" not in input_path:
+        builder = builder.master("local[*]").config("spark.submit.deployMode", "client")
+
+    spark = builder.getOrCreate()
+    sc = spark.sparkContext
+    sc.setLogLevel("ERROR")
+
+    output_path = args.output
+    if output_path is None and args.base_path:
+        output_path = build_path(args.base_path, f"wordcount_output_{sc.applicationId}")
+
+    wordcount = (
+        # textFile() gives an RDD where each element is one line from the input file.
+        sc.textFile(input_path)
+        # flatMap() is the classic "one input record -> many output records" step.
+        .flatMap(lambda line: line.split())
+        .map(lambda word: (word, 1))
+        # reduceByKey() is the standard RDD aggregation pattern for key-value data.
+        .reduceByKey(lambda left, right: left + right)
+        .sortBy(lambda item: (-item[1], item[0]))
+    )
+
+    # collect() is safe here because the lab output is intentionally small.
+    results = wordcount.collect()
+    for item in results:
+        print(item)
+
+    if output_path:
+        if "://" in output_path:
+            # coalesce(1) makes the lab output easier to inspect.
+            # For large real workloads, a single output partition would usually be a bottleneck.
+            wordcount.coalesce(1).saveAsTextFile(output_path)
+        else:
+            write_local_text_output(output_path, [str(item) for item in results])
+        print(f"Saved to: {output_path}")
+
+    spark.stop()
+
+
+if __name__ == "__main__":
+    main()
 ```
 
-Any change you make to `wordcount.py` through the Windows file system becomes immediately visible inside the container. You do not need to re-upload it after every edit.
+If you change `wordcount.py` in the repository, rerun `docker cp` so the updated version is copied into the container.
 
 The code is copied into `spark-master` because `spark-submit` runs there. The data, however, is not kept in the local file system of `spark-master`; it is uploaded to HDFS so it is available to the whole cluster.
 
 ### Uploading data files
 
-The `wordcount.py` script reads a file (or directory) from HDFS and computes word frequencies. At this point, however, the HDFS file system is empty apart from the directories created earlier.
+The `wordcount.py` script expects a base path that contains an `examples/` subdirectory with the input files. At this point, however, the HDFS file system is empty apart from the directories created earlier.
 
 So we must upload an input data file to HDFS.
 
@@ -346,10 +436,11 @@ docker exec namenode ls -lah /mnt/upload
 
 ![Figure 20](images/img20.png)
 
-Upload the file into HDFS with:
+Upload the file into HDFS with the following commands. We create `/user/root/examples` first because that is where the script will look when we pass `--base-path hdfs://namenode:9000/user/root`:
 
 ```bash
-docker exec namenode hdfs dfs -put -f /mnt/upload/text.txt /user/root/text.txt
+docker exec namenode hdfs dfs -mkdir -p /user/root/examples
+docker exec namenode hdfs dfs -put -f /mnt/upload/text.txt /user/root/examples/text.txt
 ```
 
 At this point:
@@ -359,8 +450,15 @@ At this point:
 You are ready to run the Spark program:
 
 ```bash
-docker exec spark-master /opt/spark/bin/spark-submit /mnt/upload/wordcount.py
+docker exec spark-master /opt/spark/bin/spark-submit /mnt/upload/wordcount.py \
+  --base-path hdfs://namenode:9000/user/root
 ```
+
+In this example:
+
+- the input is read from `hdfs://namenode:9000/user/root/examples/text.txt`
+- the output is automatically written to a fresh directory such as `hdfs://namenode:9000/user/root/wordcount_output_<app-id>`
+- this lets you rerun the example without manually deleting the previous output each time
 
 At this point the execution flow is:
 
@@ -480,10 +578,32 @@ Upload a file with overwrite:
 docker exec namenode hdfs dfs -put -f <local-path> <hdfs-path>
 ```
 
-## Stopping the infrastructure
+## Stopping and cleaning up the infrastructure
+
+### Stopping the infrastructure
 
 The following command stops the infrastructure. Files uploaded to HDFS or saved in the persistent volumes of `namenode` and `spark-master` are **not** deleted and remain available. As with `docker compose up`, you must run it from the directory that contains `docker-compose.yml`.
 
 ```bash
 docker compose down
 ```
+
+### Cleaning up the infrastructure
+
+If you want to return to a clean initial state, run:
+
+```bash
+docker compose down -v --remove-orphans
+```
+
+This command:
+
+- stops and removes the containers of this lab stack
+- removes the lab network
+- deletes the persistent volumes, so the HDFS data, uploaded files, and execution logs are lost
+
+The next time you run `docker compose up --build -d`, the environment starts fresh and you must repeat the HDFS initialization steps.
+
+
+
+

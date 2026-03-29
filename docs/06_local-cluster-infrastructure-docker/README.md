@@ -1,13 +1,8 @@
 # Τοπική συστοιχία Spark + HDFS με Docker Compose
 
-Αυτός είναι ο μόνος οδηγός όπου ο φοιτητής στήνει μόνος του μια πλήρη συστοιχία Spark + HDFS.
+Σε αυτόν τον οδηγό θα στήσετε από την αρχή, στον προσωπικό σας υπολογιστή, μια μικρή αλλά πλήρη συστοιχία Spark + HDFS με Docker Compose. Στόχος δεν είναι μόνο να εκτελέσετε έτοιμα παραδείγματα, αλλά να καταλάβετε ποια κομμάτια χρειάζονται για να λειτουργήσει μια τέτοια υποδομή και πώς συνεργάζονται μεταξύ τους.
 
-Οι εντολές του οδηγού τεκμηριώνονται για WSL. Τα περισσότερα βήματα θα μπορούσαν να προσαρμοστούν και σε PowerShell, αλλά δεν το κάνουμε εδώ για να μη διπλασιαστεί η πολυπλοκότητα της ροής στο τερματικό.
-
-Στους υπόλοιπους οδηγούς:
-
-- είτε τρέχει τοπικά Spark jobs χωρίς να στήσει συστοιχία
-- είτε χρησιμοποιεί την έτοιμη συστοιχία Kubernetes του εργαστηρίου
+Μέσα από τα βήματα του οδηγού θα δείτε στην πράξη τον ρόλο του Namenode, των Datanodes, του Spark master και των Spark workers, θα αρχικοποιήσετε το HDFS, θα ανεβάσετε κώδικα και δεδομένα και θα εκτελέσετε εργασίες πάνω στη συστοιχία. Οι εντολές τεκμηριώνονται για WSL, ώστε η ροή να παραμείνει ενιαία και απλή για το εργαστήριο.
 
 
 
@@ -165,7 +160,7 @@ cd ~/bigdata-uth/docker/01-lab1-spark-hdfs/
 docker compose up --build -d
 ```
 
-Την πρώτη φορά που θα εκτελέσετε την εντολή θα χρειαστεί περίπου 1-2 λεπτά, ανάλογα με την ταχύτητα του internet και του υπολογιστή σας για την ανάκτηση των απαραίτητων εικόνων, την δημιουργία των νέων εικόνων και  την εκκίνηση των περιεκτών.
+Την πρώτη φορά που θα εκτελέσετε την εντολή μπορεί να χρειαστούν αρκετά λεπτά, ειδικά αν το Docker Desktop μόλις ξεκίνησε ή αν πρέπει να κατεβούν μεγάλες εικόνες. Αν δείτε καθυστέρηση, πρώτα επιβεβαιώστε ότι το `docker version` λειτουργεί κανονικά μέσα από το WSL terminal και αφήστε λίγο χρόνο στο Docker Desktop να ολοκληρώσει την εκκίνησή του.
 
 Εάν όλα πάνε καλά, θα δείτε στο πρόγραμμα docker-desktop την υποδομή να εκτελείται κανονικά (πράσινη κουκκίδα).
 
@@ -301,7 +296,7 @@ docker cp ~/bigdata-uth/code/wordcount.py spark-master:/mnt/upload/wordcount.py
 
 ![Εικόνα 18](images/img18.png)
 
-Πλέον, ο περιέκτης spark-master έχει στο τοπικό σύστημα αρχείων του το αρχείο word-count.py στον κατάλογο `/mnt/upload` όπως μπορείτε να δείτε εκτελώντας την παρακάτω εντολή:
+Πλέον, ο περιέκτης spark-master έχει στο τοπικό σύστημα αρχείων του το αρχείο wordcount.py στον κατάλογο `/mnt/upload` όπως μπορείτε να δείτε εκτελώντας την παρακάτω εντολή:
 
 ```bash
 docker exec spark-master ls /mnt/upload 
@@ -314,31 +309,123 @@ docker exec spark-master ls /mnt/upload
 ```bash
 docker exec spark-master cat /mnt/upload/wordcount.py 
 ```
-Και θα δείτε το `wordcount.py` αρχείο να τυπώνεται:
+Και θα δείτε το `wordcount.py` αρχείο να τυπώνεται. Το script που χρησιμοποιούμε είναι πλέον το ίδιο κοινό script του repository που μπορεί να τρέξει είτε τοπικά είτε σε συστοιχία, ανάλογα με το `--base-path` που θα του δώσουμε:
 
+<!-- AUTO-CODE: code/wordcount.py -->
+``` python
+from __future__ import annotations
 
-```python
-from pyspark import SparkConf
+import argparse
+import os
+import sys
+
 from pyspark.sql import SparkSession
-conf = SparkConf().setAppName("Word Count example") \
-    .set("spark.master", "spark://spark-master:7077") \
-    .set("spark.executor.memory", "3g") \
-    .set("spark.driver.memory", "512m")
-sc = SparkSession.builder.config(conf=conf).getOrCreate().sparkContext
-wordcount = sc.textFile("hdfs://namenode:9000/user/root/text.txt") \
-    .flatMap(lambda x: x.split(" ")) \
-    .map(lambda x: (x, 1)) \
-    .reduceByKey(lambda x,y: x+y) \
-    .sortBy(lambda x: x[1], ascending=False)
-print(wordcount.collect())
-wordcount.saveAsTextFile("hdfs://namenode:9000/user/root/wordcount-output")
+
+# Keep the Python executable the same on the driver and on Spark workers.
+# This avoids subtle version mismatches when the same script runs locally or on a cluster.
+os.environ["PYSPARK_PYTHON"] = sys.executable
+os.environ["PYSPARK_DRIVER_PYTHON"] = sys.executable
+
+
+def build_path(base_path: str, relative_path: str) -> str:
+    return f"{base_path.rstrip('/')}/{relative_path.lstrip('/')}"
+
+
+def write_local_text_output(output_path: str, lines: list[str]) -> None:
+    os.makedirs(output_path, exist_ok=True)
+    output_file = os.path.join(output_path, "part-00000")
+    with open(output_file, "w", encoding="utf-8") as file_handle:
+        for line in lines:
+            file_handle.write(f"{line}\n")
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Count word frequencies from a text file with Spark.",
+    )
+    parser.add_argument(
+        "--base-path",
+        help="Base path that contains examples/ and where outputs should be written.",
+    )
+    parser.add_argument(
+        "--input",
+        help="Explicit input text path. Defaults to examples/text.txt locally or <base-path>/examples/text.txt remotely.",
+    )
+    parser.add_argument(
+        "--output",
+        help="Explicit output path. If omitted, local runs only print results and remote runs write under <base-path>.",
+    )
+    parser.add_argument(
+        "--master",
+        help="Optional Spark master. Local runs default to local[*] when no remote path is used.",
+    )
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    input_path = args.input or (
+        build_path(args.base_path, "examples/text.txt")
+        if args.base_path
+        else "examples/text.txt"
+    )
+
+    builder = SparkSession.builder.appName("wordcount example")
+    # Reuse the same script in two contexts:
+    # - local files -> start a local Spark session
+    # - remote URIs -> let spark-submit use the external cluster configuration
+    if args.master:
+        builder = builder.master(args.master)
+        if args.master.startswith("local"):
+            builder = builder.config("spark.submit.deployMode", "client")
+    elif "://" not in input_path:
+        builder = builder.master("local[*]").config("spark.submit.deployMode", "client")
+
+    spark = builder.getOrCreate()
+    sc = spark.sparkContext
+    sc.setLogLevel("ERROR")
+
+    output_path = args.output
+    if output_path is None and args.base_path:
+        output_path = build_path(args.base_path, f"wordcount_output_{sc.applicationId}")
+
+    wordcount = (
+        # textFile() gives an RDD where each element is one line from the input file.
+        sc.textFile(input_path)
+        # flatMap() is the classic "one input record -> many output records" step.
+        .flatMap(lambda line: line.split())
+        .map(lambda word: (word, 1))
+        # reduceByKey() is the standard RDD aggregation pattern for key-value data.
+        .reduceByKey(lambda left, right: left + right)
+        .sortBy(lambda item: (-item[1], item[0]))
+    )
+
+    # collect() is safe here because the lab output is intentionally small.
+    results = wordcount.collect()
+    for item in results:
+        print(item)
+
+    if output_path:
+        if "://" in output_path:
+            # coalesce(1) makes the lab output easier to inspect.
+            # For large real workloads, a single output partition would usually be a bottleneck.
+            wordcount.coalesce(1).saveAsTextFile(output_path)
+        else:
+            write_local_text_output(output_path, [str(item) for item in results])
+        print(f"Saved to: {output_path}")
+
+    spark.stop()
+
+
+if __name__ == "__main__":
+    main()
 ```
 
-Επιπλέον, κάθε αλλαγή στο αρχείο `wordcount.py` που κάνετε από το σύστημα αρχείων των windows θα είναι άμεσα ορατή και στο σύστημα αρχείων του περιέκτη (δεν χρειάζεται να το ανεβάζετε με κάθε αλλαγή του κώδικα).
+Αν αλλάξετε το `wordcount.py` στο repository, επαναλάβετε το `docker cp` ώστε να περάσει η νεότερη έκδοση μέσα στον περιέκτη.
 
 Ο κώδικας αντιγράφεται στον `spark-master`, γιατί από εκεί εκτελείται το `spark-submit`. Αντίθετα, τα δεδομένα δεν μένουν στο τοπικό filesystem του `spark-master`, αλλά ανεβαίνουν στο HDFS ώστε να είναι διαθέσιμα σε όλη τη συστοιχία.
 
-**Ανέβασμα αρχείων δεδομένων**: Το `wordcount.py` αρχείο διαβάζει έναν κατάλογο (ή ένα αρχείο μόνο) από το hdfs και υπολογίζει τον αριθμό εμφανίσεων των λέξεων. Αυτή την στιγμή όμως, το σύστημα αρχείων hdfs είναι κενό (εκτός από τους 2 καταλόγους που δημιουργήσαμε σε προηγούμενο βήμα).
+**Ανέβασμα αρχείων δεδομένων**: Το `wordcount.py` περιμένει από το `--base-path` έναν βασικό κατάλογο που περιέχει υποκατάλογο `examples/` με τα αρχεία εισόδου. Αυτή την στιγμή όμως, το σύστημα αρχείων hdfs είναι κενό (εκτός από τους 2 καταλόγους που δημιουργήσαμε σε προηγούμενο βήμα).
 
 Θα χρειαστεί να ανεβάσουμε ένα αρχείο με δεδομένα στο hdfs για να τρέξουμε το wordcount με είσοδο το αρχείο αυτό.
 
@@ -369,17 +456,25 @@ docker exec namenode ls -lah /mnt/upload
 
 ![Εικόνα 20](images/img20.png)
 
-Πλέον, με την παρακάτω εντολή ανεβάζουμε στο hdfs το αρχείο text.txt που βρίσκεται στο τοπικό σύστημα αρχείων του namenode στον κατάλογο `/mnt/upload` (με τον διακόπτη `-f` κάνουμε overwrite εάν υπάρχει ήδη):
+Πλέον, με τις παρακάτω εντολές ανεβάζουμε στο hdfs το αρχείο `text.txt` που βρίσκεται στο τοπικό σύστημα αρχείων του namenode στον κατάλογο `/mnt/upload`. Δημιουργούμε πρώτα τον κατάλογο `/user/root/examples`, γιατί εκεί θα ψάξει το script όταν του δώσουμε `--base-path hdfs://namenode:9000/user/root`:
 
 ```bash
-docker exec namenode hdfs dfs -put -f /mnt/upload/text.txt /user/root/text.txt
+docker exec namenode hdfs dfs -mkdir -p /user/root/examples
+docker exec namenode hdfs dfs -put -f /mnt/upload/text.txt /user/root/examples/text.txt
 ```
 
-Τώρα έχουμε τοποθετήσει το αρχείο python προς εκτέλεση στο τοπικό σύστημα αρχείων του `spark-master` και το αρχείο `text.txt` στο hdfs. Είμαστε έτοιμοι να εκτελέσουμε το spark πρόγραμμα με την παρακάτω εντολή:
+Τώρα έχουμε τοποθετήσει το αρχείο Python προς εκτέλεση στο τοπικό σύστημα αρχείων του `spark-master` και το αρχείο `text.txt` στο HDFS. Είμαστε έτοιμοι να εκτελέσουμε το Spark πρόγραμμα με την παρακάτω εντολή:
 
 ```bash
-docker exec spark-master /opt/spark/bin/spark-submit /mnt/upload/wordcount.py 
+docker exec spark-master /opt/spark/bin/spark-submit /mnt/upload/wordcount.py \
+  --base-path hdfs://namenode:9000/user/root
 ```
+
+Σε αυτό το παράδειγμα:
+
+- το input διαβάζεται από το `hdfs://namenode:9000/user/root/examples/text.txt`
+- το output γράφεται αυτόματα σε νέο κατάλογο της μορφής `hdfs://namenode:9000/user/root/wordcount_output_<app-id>`
+- έτσι μπορείτε να ξανατρέχετε το παράδειγμα χωρίς να σβήνετε κάθε φορά το προηγούμενο output
 
 Σε αυτό το σημείο η ακολουθία είναι η εξής:
 
@@ -488,8 +583,28 @@ docker exec namenode hdfs dfs -rm -r -f <path>
 docker exec namenode hdfs dfs -put -f <local-path> <hdfs-path>
 ```
 
-**Τερματισμός Υποδομής**: Με την παρακάτω εντολή τερματίζετε (σταματάτε την λειτουργία) της υποδομής. Αρχεία που έχουν ανέβει στο hdfs ή έχουν αποθηκευτεί στους μόνιμους τόμους των namenode και spark-master δεν διαγράφονται, και παραμένουν. Όπως και για την `docker compose up`, θα χρειαστεί να βρίσκεστε στον κατάλογο που είναι το `docker-compose.yml` αρχείο.
+## Τερματισμός και καθαρισμός υποδομής
+
+**Τερματισμός υποδομής**: Με την παρακάτω εντολή σταματάτε την υποδομή. Τα αρχεία που έχουν ανέβει στο HDFS ή έχουν αποθηκευτεί στους μόνιμους τόμους του `namenode` και του `spark-master` δεν διαγράφονται και παραμένουν διαθέσιμα. Όπως και για την `docker compose up`, θα χρειαστεί να βρίσκεστε στον κατάλογο που περιέχει το `docker-compose.yml` αρχείο.
 
 ```bash
 docker compose down
 ```
+
+**Καθαρισμός υποδομής**: Αν θέλετε να επιστρέψετε σε καθαρή αρχική κατάσταση, εκτελέστε την παρακάτω εντολή:
+
+```bash
+docker compose down -v --remove-orphans
+```
+
+Με αυτή την εντολή:
+
+- σταματούν και αφαιρούνται οι περιέκτες της άσκησης
+- αφαιρείται το τοπικό δίκτυο της άσκησης
+- διαγράφονται οι μόνιμοι τόμοι, άρα χάνονται τα δεδομένα του HDFS, τα μεταφορτωμένα αρχεία και τα αρχεία καταγραφής
+
+Την επόμενη φορά που θα εκτελέσετε `docker compose up --build -d`, θα ξεκινήσετε από καθαρή κατάσταση και θα χρειαστεί να επαναλάβετε την αρχικοποίηση του HDFS.
+
+
+
+
