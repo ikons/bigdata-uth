@@ -1,8 +1,8 @@
-# Προετοιμασία σταθμού εργασίας (WSL + Docker Desktop)
+# Προετοιμασία σταθμού εργασίας (WSL + Docker)
 
 
 
-Το μάθημα περιλαμβάνει εργαστηριακό μέρος, στο οποίο θα χρησιμοποιήσουμε Docker containers. Ο παρών οδηγός περιγράφει τα προπαρασκευαστικά βήματα που πρέπει να έχουν ολοκληρωθεί πριν από το πρώτο εργαστήριο. Συγκεκριμένα, καλύπτει τη ρύθμιση του Windows Subsystem for Linux (WSL), του Ubuntu και του Docker Desktop σε προσωπικό υπολογιστή.
+Το μάθημα περιλαμβάνει εργαστηριακό μέρος, στο οποίο θα χρησιμοποιήσουμε Docker containers. Ο παρών οδηγός περιγράφει τα προπαρασκευαστικά βήματα που πρέπει να έχουν ολοκληρωθεί πριν από το πρώτο εργαστήριο. Συγκεκριμένα, καλύπτει τη ρύθμιση του Windows Subsystem for Linux (WSL), του Ubuntu και του Docker σε προσωπικό υπολογιστή.
 
 
 
@@ -126,7 +126,16 @@ wsl --list --verbose
 
 Αν όλα είναι σωστά ρυθμισμένα, το WSL και το `Virtual Machine Platform` θα πρέπει να εμφανίζονται ως ενεργοποιημένα και το Ubuntu ή άλλη διανομή θα είναι διαθέσιμη για χρήση στο σύστημά σας.
 
-## Εγκατάσταση Docker Desktop
+## Εγκατάσταση Docker στο WSL
+
+Ο οδηγός υποστηρίζει δύο διαδρομές:
+
+- **Προτεινόμενη και δοκιμασμένη**: `Docker Desktop` με WSL integration
+- **Προαιρετική advanced**: native `Docker Engine` απευθείας μέσα στο Ubuntu του WSL
+
+Για τους περισσότερους φοιτητές προτείνεται να μείνουν στη διαδρομή `Docker Desktop`. Η δεύτερη διαδρομή είναι χρήσιμη αν θέλετε να δουλέψετε μόνο μέσα από το Ubuntu, χωρίς ξεχωριστή εφαρμογή Docker Desktop στα Windows.
+
+### Προτεινόμενη διαδρομή: Docker Desktop
 
 Μεταβείτε στην επίσημη σελίδα του Docker και κατεβάστε την πιο πρόσφατη έκδοση του Docker Desktop για Windows x86_64:
 
@@ -192,6 +201,57 @@ docker run hello-world
 **Αναβάθμιση Docker**: Το Docker Desktop ενημερώνεται αυτόματα. Μπορείς να ελέγξεις αν υπάρχουν νέες εκδόσεις στις **Settings** > **Updates**.
 
 **Ρυθμίσεις πόρων**: Στην καρτέλα **Resources** του Docker Desktop, μπορείς να ρυθμίσεις τη χρήση πόρων όπως CPU, μνήμη (RAM) και δίσκο για το WSL backend.
+
+### Προαιρετική advanced εναλλακτική: native Docker Engine μέσα στο WSL
+
+Αν δεν θέλετε να χρησιμοποιήσετε Docker Desktop, μπορείτε να εγκαταστήσετε κανονικό `Docker Engine` απευθείας μέσα στο Ubuntu του WSL. Αυτό το path το ελέγξαμε και μπορεί να σηκώσει τον οδηγό `06_local-cluster-infrastructure-docker`, αλλά είναι λίγο πιο απαιτητικό διαχειριστικά.
+
+Πριν ξεκινήσετε, ελέγξτε αν το WSL shell σας έχει ενεργό `systemd`:
+
+```bash
+systemctl is-system-running
+```
+
+Αν το `systemd` δεν είναι διαθέσιμο, βάλτε το παρακάτω στο `/etc/wsl.conf`:
+
+```ini
+[boot]
+systemd=true
+```
+
+και μετά, από PowerShell στα Windows, εκτελέστε:
+
+```powershell
+wsl --shutdown
+```
+
+Ανοίξτε ξανά το Ubuntu και συνεχίστε με την εγκατάσταση:
+
+```bash
+sudo apt update
+sudo apt install -y ca-certificates curl gnupg
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo \"$VERSION_CODENAME\") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo systemctl enable --now docker
+sudo usermod -aG docker "$USER"
+newgrp docker
+docker version
+docker compose version
+docker run hello-world
+```
+
+Αν χρησιμοποιείτε αυτή τη διαδρομή:
+
+- δεν χρειάζεστε Docker Desktop στα Windows για τον οδηγό `06`
+- ο Docker daemon τρέχει μέσα στο Ubuntu
+- οι Docker volumes βρίσκονται στο filesystem του WSL, συνήθως στο `/var/lib/docker/volumes`
 
 ## Εργαλεία που θα χρειαστούν στους επόμενους οδηγούς
 
@@ -375,6 +435,5 @@ cd bigdata-uth
 - Για `02` και `03`, μπορείτε να δουλέψετε είτε από PowerShell είτε από WSL.
 - Για `04` και `05`, δουλεύετε μόνο από WSL.
 - Αν ξεκινήσετε τοπικά από Windows, μπορείτε αργότερα να κάνετε δεύτερο clone στο WSL μόνο για την απομακρυσμένη διαδρομή.
-
 
 

@@ -4,6 +4,33 @@
 
 Μέσα από τα βήματα του οδηγού θα δείτε στην πράξη τον ρόλο του Namenode, των Datanodes, του Spark master και των Spark workers, θα αρχικοποιήσετε το HDFS, θα ανεβάσετε κώδικα και δεδομένα και θα εκτελέσετε εργασίες πάνω στη συστοιχία. Οι εντολές τεκμηριώνονται για WSL, ώστε η ροή να παραμείνει ενιαία και απλή για το εργαστήριο.
 
+Ο οδηγός αυτός μπορεί να εκτελεστεί με δύο παραλλαγές Docker μέσα στο WSL:
+
+- **Προτεινόμενη**: `Docker Desktop` με WSL integration
+- **Προαιρετική advanced**: native `Docker Engine` απευθείας μέσα στο Ubuntu
+
+Από το σημείο που το `docker version` και το `docker compose version` δουλεύουν κανονικά μέσα στο WSL terminal, οι βασικές εντολές του οδηγού είναι ίδιες και για τις δύο διαδρομές.
+
+## Προέλεγχος Docker στο WSL
+
+Πριν προχωρήσετε, βεβαιωθείτε ότι το ενεργό Docker CLI μέσα στο WSL βλέπει κανονικά έναν Docker daemon:
+
+```bash
+docker version
+docker compose version
+docker info --format '{{.ServerVersion}}'
+```
+
+Αν χρησιμοποιείτε `Docker Desktop`, φροντίστε πρώτα να έχει ξεκινήσει κανονικά η εφαρμογή στα Windows.
+
+Αν χρησιμοποιείτε native `Docker Engine` μέσα στο WSL, ελέγξτε και:
+
+```bash
+systemctl is-active docker
+```
+
+που πρέπει να επιστρέφει `active`.
+
 
 
 ## Αρχιτεκτονική HDFS και Spark
@@ -160,9 +187,9 @@ cd ~/bigdata-uth/docker/01-lab1-spark-hdfs/
 docker compose up --build -d
 ```
 
-Την πρώτη φορά που θα εκτελέσετε την εντολή μπορεί να χρειαστούν αρκετά λεπτά, ειδικά αν το Docker Desktop μόλις ξεκίνησε ή αν πρέπει να κατεβούν μεγάλες εικόνες. Αν δείτε καθυστέρηση, πρώτα επιβεβαιώστε ότι το `docker version` λειτουργεί κανονικά μέσα από το WSL terminal και αφήστε λίγο χρόνο στο Docker Desktop να ολοκληρώσει την εκκίνησή του.
+Την πρώτη φορά που θα εκτελέσετε την εντολή μπορεί να χρειαστούν αρκετά λεπτά, ειδικά αν ο Docker daemon μόλις ξεκίνησε ή αν πρέπει να κατεβούν μεγάλες εικόνες. Αν δείτε καθυστέρηση, πρώτα επιβεβαιώστε ότι το `docker version` λειτουργεί κανονικά μέσα από το WSL terminal και αφήστε λίγο χρόνο στον Docker daemon να ολοκληρώσει την εκκίνησή του.
 
-Εάν όλα πάνε καλά, θα δείτε στο πρόγραμμα docker-desktop την υποδομή να εκτελείται κανονικά (πράσινη κουκκίδα).
+Εάν όλα πάνε καλά, θα δείτε τους περιέκτες να ξεκινούν κανονικά. Αν χρησιμοποιείτε Docker Desktop, θα τους δείτε και στο γραφικό περιβάλλον της εφαρμογής (πράσινη κουκκίδα).
 
 ![Εικόνα 6](images/img6.png)
 
@@ -173,7 +200,7 @@ docker ps
 ```
 ![Εικόνα 7](images/img7.png)
 
-Κάντε κλικ στο 01-lab1-spark-hdfs και θα δείτε τους επιμέρους περιέκτες που εκτελούνται:
+Αν χρησιμοποιείτε Docker Desktop, μπορείτε να κάνετε κλικ στο `01-lab1-spark-hdfs` και να δείτε τους επιμέρους περιέκτες που εκτελούνται:
 
 ![Εικόνα 8](images/img8.png)
 
@@ -200,9 +227,11 @@ docker volume ls
 
 ![Εικόνα 12](images/img12.png)
 
-Στην έκδοση docker που χρησιμοποιούμε οι τόμοι είναι υποκατάλογοι σε έναν τοπικό κατάλογο του docker server. 
+Το πού ακριβώς ζουν οι Docker volumes εξαρτάται από τη διαδρομή Docker που χρησιμοποιείτε.
 
-Επειδή ο τοπικός docker server είναι και αυτός μια εικονική μηχανή (virtual machine), ο τοπικός κατάλογος είναι ένας κατάλογος στο σύστημα αρχείων της εικονικής μηχανής του docker.
+### Αν χρησιμοποιείτε Docker Desktop
+
+Στην περίπτωση αυτή, ο docker daemon δεν τρέχει μέσα στο Ubuntu του WSL αλλά μέσα στην υποδομή `docker-desktop`.
 
 Για να καταλάβετε τι εννοώ, ανοίξτε ένα κέλυφος των windows (δεξί κλικ στο σύμβολο των windows) και επιλέξτε Terminal 
 
@@ -231,23 +260,126 @@ wsl -l -v
 
 ![Εικόνα 15](images/img15.png)
 
+### Αν χρησιμοποιείτε native Docker Engine μέσα στο WSL
 
-**Αρχικοποίηση του συστήματος αρχείων HDFS:** Την πρώτη φορά που θα δημιουργήσετε την υποδομή, θα πρέπει να δημιουργήσετε και τους απαραίτητους καταλόγους στο hdfs για να ανεβάζετε αρχεία και για να κρατάτε πληροφορίες εκτέλεσης εργασιών. Εκτελέστε τις παρακάτω εντολές από το **κέλυφος Ubuntu**:
+Στην περίπτωση αυτή, δεν υπάρχει ξεχωριστή `docker-desktop` εικονική μηχανή. Ο docker daemon τρέχει μέσα στο ίδιο το Ubuntu του WSL και οι volumes ζουν στο filesystem του, συνήθως κάτω από:
 
 ```bash
-docker exec namenode hdfs dfs -mkdir -p /user/root
-docker exec namenode hdfs dfs -mkdir -p /logs
-docker compose stop spark-master
-docker compose rm -f spark-master
-docker compose up -d spark-master
+/var/lib/docker/volumes
 ```
 
+Μπορείτε να δείτε τους φακέλους τους με:
 
-Με τις παρακάτω εντολές εκτελείτε μέσω του περιέκτη namenode την εντολή hdfs dfs με την οποία δημιουργείτε 2 φακέλους: 
+```bash
+sudo ls /var/lib/docker/volumes
+```
 
-- τον `/user/root`, όπου θα βάζετε τα αρχεία προς επεξεργασία
-- τον `/logs` στον οποίο θα αποθηκεύονται αρχεία καταγραφής των εργασιών σας για να βλέπετε τι έχει τρέξει και εάν έχει τρέξει σωστά. Μετά την σωστή εκτέλεση, αν ανοίξετε την ιστοσελίδα του hdfs στην διεύθυνση http://localhost:9870 θα δείτε τους καταλόγους που δημιουργήσατε
-- Επίσης, επανεκκινείτε τον περιέκτη `spark-master`, για να λειτουργήσει σωστά ο history-server (περισσότερες πληροφορίες παρακάτω).
+ή να εξετάσετε έναν συγκεκριμένο τόμο με:
+
+```bash
+sudo ls /var/lib/docker/volumes/<volume-name>/_data
+```
+
+Στο εργαστήριο όμως προτιμούμε να δουλεύουμε με `docker cp` και `docker exec`, ώστε τα βήματα να είναι ίδια και στις δύο διαδρομές.
+
+
+**Αρχικοποίηση του συστήματος αρχείων HDFS:** Την πρώτη φορά που θα δημιουργήσετε την υποδομή, θα πρέπει να δημιουργήσετε και τους απαραίτητους καταλόγους στο HDFS για να ανεβάζετε αρχεία και για να κρατάτε πληροφορίες εκτέλεσης εργασιών.
+
+Ο πιο ασφαλής τρόπος είναι να χρησιμοποιήσετε το helper script του repository, το οποίο:
+
+- περιμένει να γίνει healthy ο `namenode`
+- περιμένει να ανταποκρίνεται το HDFS RPC endpoint
+- περιμένει να τελειώσει το HDFS safe mode
+- δημιουργεί τους καταλόγους `/user/root`, `/user/root/examples` και `/logs`
+- επανεκκινεί τον `spark-master`, ώστε ο History Server να συνδεθεί ξανά σε έτοιμο HDFS
+
+Από το **κέλυφος Ubuntu**, εκτελέστε:
+
+```bash
+bash init-hdfs.sh
+```
+
+Το script είναι το εξής:
+
+<!-- AUTO-CODE: docker/01-lab1-spark-hdfs/init-hdfs.sh -->
+``` bash
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+MAX_ATTEMPTS=60
+SLEEP_SECONDS=2
+
+wait_for_namenode_health() {
+  local attempt health
+  for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
+    health="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}' namenode 2>/dev/null || true)"
+    echo "namenode health attempt ${attempt}/${MAX_ATTEMPTS}: ${health}"
+    if [ "$health" = "healthy" ]; then
+      return 0
+    fi
+    sleep "$SLEEP_SECONDS"
+  done
+
+  echo "NameNode did not become healthy in time." >&2
+  return 1
+}
+
+wait_for_hdfs_rpc() {
+  local attempt
+  for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
+    if docker exec namenode hdfs dfsadmin -report >/dev/null 2>&1; then
+      echo "HDFS RPC endpoint is responding."
+      return 0
+    fi
+    echo "HDFS RPC attempt ${attempt}/${MAX_ATTEMPTS}: not ready yet"
+    sleep "$SLEEP_SECONDS"
+  done
+
+  echo "HDFS RPC endpoint did not become ready in time." >&2
+  return 1
+}
+
+wait_for_safe_mode_to_end() {
+  local attempt safe_mode_output
+  for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
+    safe_mode_output="$(docker exec namenode hdfs dfsadmin -safemode get 2>/dev/null || true)"
+    echo "safe mode attempt ${attempt}/${MAX_ATTEMPTS}: ${safe_mode_output:-unknown}"
+    if ! printf '%s' "$safe_mode_output" | grep -q 'Safe mode is ON'; then
+      return 0
+    fi
+    sleep "$SLEEP_SECONDS"
+  done
+
+  echo "HDFS stayed in safe mode for too long." >&2
+  return 1
+}
+
+echo "Waiting for the NameNode container to become healthy..."
+wait_for_namenode_health
+
+echo "Waiting for the HDFS RPC endpoint to respond..."
+wait_for_hdfs_rpc
+
+# Ask HDFS to leave safe mode when it is already ready enough to accept admin commands.
+# If it has already left safe mode, this is a harmless no-op.
+docker exec namenode hdfs dfsadmin -safemode leave >/dev/null 2>&1 || true
+
+echo "Waiting for HDFS safe mode to end..."
+wait_for_safe_mode_to_end
+
+echo "Creating the lab directories in HDFS..."
+docker exec namenode hdfs dfs -mkdir -p /user/root /user/root/examples /logs
+
+echo "Restarting spark-master so the History Server reconnects to the ready HDFS..."
+docker compose restart spark-master
+
+echo "Local HDFS initialization completed."
+```
+<!-- END AUTO-CODE -->
 
 Ο λόγος που δημιουργούμε τον `/logs` στο HDFS είναι ότι ο History Server δεν διαβάζει logs από το τοπικό filesystem του host. Διαβάζει Spark event logs από το ίδιο HDFS που χρησιμοποιούν και τα jobs.
 
@@ -279,11 +411,7 @@ docker exec spark-master /opt/spark/bin/spark-submit /opt/spark/examples/src/mai
 - Αρχεία με **κώδικα** (πχ σε python).
 - Αρχεία με **δεδομένα** στα οποία θα γίνει επεξεργασία (πχ τα κείμενα στα οποία θα τρέξει ένα wordcount).
 
-**Ανέβασμα κώδικα**: Για τη ροή που βασίζεται στο αποθετήριο, ο προτεινόμενος τρόπος είναι το `docker cp` από το κλωνοποιημένο repo και όχι χειροκίνητη αντιγραφή σε Docker Desktop volume paths.
-
-```
-\\wsl.localhost\docker-desktop\mnt\docker-desktop-disk\data\docker\volumes\01-lab1-spark-hdfs_spark-master-upload\_data
-```
+**Ανέβασμα κώδικα**: Για τη ροή που βασίζεται στο αποθετήριο, ο προτεινόμενος τρόπος είναι το `docker cp` από το κλωνοποιημένο repo και όχι χειροκίνητη αντιγραφή σε volume paths. Αυτό κρατά τα βήματα ίδια είτε χρησιμοποιείτε Docker Desktop είτε native Docker Engine μέσα στο WSL.
 
 ![Εικόνα 17](images/img17.png)
 
@@ -420,6 +548,7 @@ def main() -> None:
 if __name__ == "__main__":
     main()
 ```
+<!-- END AUTO-CODE -->
 
 Αν αλλάξετε το `wordcount.py` στο repository, επαναλάβετε το `docker cp` ώστε να περάσει η νεότερη έκδοση μέσα στον περιέκτη.
 
@@ -434,10 +563,6 @@ if __name__ == "__main__":
 Κατόπιν θα εκτελέσουμε την εντολή `hdfs dfs -put` από τον περιέκτη namenode με την οποία θα κάνουμε upload το αρχείο από το τοπικό σύστημα αρχείων του περιέκτη (κατάλογος `/mnt/upload`) στο σύστημα αρχείων του hdfs. 
 
 Για τον σκοπό αυτό χρησιμοποιούμε πάλι `docker cp`, αυτή τη φορά για να αντιγράψουμε το βασικό dataset στον `namenode`.
-
-```
-\\wsl.localhost\docker-desktop\mnt\docker-desktop-disk\data\docker\volumes\01-lab1-spark-hdfs_namenode-upload\_data
-```
 
 Από WSL terminal τρέξτε:
 
@@ -604,7 +729,4 @@ docker compose down -v --remove-orphans
 - διαγράφονται οι μόνιμοι τόμοι, άρα χάνονται τα δεδομένα του HDFS, τα μεταφορτωμένα αρχεία και τα αρχεία καταγραφής
 
 Την επόμενη φορά που θα εκτελέσετε `docker compose up --build -d`, θα ξεκινήσετε από καθαρή κατάσταση και θα χρειαστεί να επαναλάβετε την αρχικοποίηση του HDFS.
-
-
-
 

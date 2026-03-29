@@ -6,7 +6,7 @@
 
 ## 📘 Σειρά Μελέτης / Οδηγοί Εκτέλεσης (Markdown)
 
-- `01` [01_workstation-setup](docs/01_workstation-setup): Προετοιμασία σταθμού εργασίας με WSL 2 και Docker Desktop
+- `01` [01_workstation-setup](docs/01_workstation-setup): Προετοιμασία σταθμού εργασίας με WSL 2 και Docker
 - `02` [02_vscode-local-authoring](docs/02_vscode-local-authoring): Προτεινόμενη και δοκιμασμένη ροή τοπικής ανάπτυξης Spark με VS Code
 - `02` [02_pycharm-local-authoring](docs/02_pycharm-local-authoring): Εναλλακτική ροή τοπικής ανάπτυξης για όσους προτιμούν PyCharm
 - `03` [03_local-spark-workbook](docs/03_local-spark-workbook): Τοπική εξάσκηση με Spark, RDD, DataFrame API και Spark SQL
@@ -83,12 +83,13 @@ command -v spark-submit
 
 ---
 
-## 🧱 Προετοιμασία Σταθμού Εργασίας (WSL + Docker Desktop)
+## 🧱 Προετοιμασία Σταθμού Εργασίας (WSL + Docker)
 
 📄 Οδηγός: [`docs/01_workstation-setup`](docs/01_workstation-setup/)
 
 - Εγκατάσταση WSL 2 και Ubuntu
-- Ρύθμιση Docker Desktop για χρήση WSL backend
+- Προτεινόμενη ρύθμιση Docker Desktop για χρήση WSL backend
+- Προαιρετική advanced εναλλακτική με native Docker Engine μέσα στο WSL
 - Επιβεβαίωση εγκατάστασης και τεστ με `hello-world`
 
 ---

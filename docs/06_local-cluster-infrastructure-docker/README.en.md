@@ -4,6 +4,33 @@ In this guide, students build a small but complete Spark + HDFS cluster from scr
 
 As you go through the steps, you will see the role of the NameNode, the DataNodes, the Spark master, and the Spark workers in practice, initialize HDFS, upload code and data, and execute jobs on the cluster. The commands are documented for WSL so that the workflow stays consistent and simple throughout the lab.
 
+This guide can run with two Docker variants inside WSL:
+
+- **Recommended**: `Docker Desktop` with WSL integration
+- **Optional advanced**: a native `Docker Engine` directly inside Ubuntu
+
+Once `docker version` and `docker compose version` work normally from the WSL terminal, the main commands of the guide are the same for both paths.
+
+## Docker preflight inside WSL
+
+Before you continue, make sure the active Docker CLI inside WSL can talk to a working Docker daemon:
+
+```bash
+docker version
+docker compose version
+docker info --format '{{.ServerVersion}}'
+```
+
+If you use `Docker Desktop`, make sure the Windows application has fully started first.
+
+If you use a native `Docker Engine` inside WSL, also verify:
+
+```bash
+systemctl is-active docker
+```
+
+which should return `active`.
+
 ## HDFS and Spark architecture
 
 **HDFS** is a distributed file system from which Spark jobs can read and write data.
@@ -137,9 +164,9 @@ In other words:
 docker compose up --build -d
 ```
 
-The first execution may take several minutes, especially if Docker Desktop has just started or if the larger images still need to be downloaded. If it seems slow, first confirm that `docker version` works from inside the WSL terminal and give Docker Desktop a little time to finish its startup sequence.
+The first execution may take several minutes, especially if the Docker daemon has just started or if the larger images still need to be downloaded. If it seems slow, first confirm that `docker version` works from inside the WSL terminal and give the Docker daemon a little time to finish its startup sequence.
 
-If everything works correctly, Docker Desktop will show the stack as running (green dot).
+If everything works correctly, the containers will start normally. If you use Docker Desktop, you will also see the stack in the graphical application (green dot).
 
 ![Figure 6](images/img6.png)
 
@@ -151,7 +178,7 @@ docker ps
 
 ![Figure 7](images/img7.png)
 
-Click on **01-lab1-spark-hdfs** in Docker Desktop to see the individual containers.
+If you use Docker Desktop, click on **01-lab1-spark-hdfs** to see the individual containers.
 
 ![Figure 8](images/img8.png)
 
@@ -181,9 +208,11 @@ docker volume ls
 
 ![Figure 12](images/img12.png)
 
-In the Docker setup used here, volumes are stored as subdirectories under a local directory of the Docker server.
+Where Docker volumes live depends on which Docker path you use.
 
-Because the local Docker server is itself a virtual machine, that directory is part of the Docker VM file system.
+### If you use Docker Desktop
+
+In this case, the Docker daemon does not run inside Ubuntu itself, but inside the `docker-desktop` infrastructure.
 
 To see this, open a Windows terminal (**right-click the Windows icon → Terminal**) and run:
 
@@ -209,21 +238,125 @@ Open Windows Explorer and paste the above path in the address bar. There you wil
 
 ![Figure 15](images/img15.png)
 
-**Initializing the HDFS file system:** The first time you create the environment, you must also create the required HDFS directories for uploading files and storing Spark execution logs. Run the following commands from the **Ubuntu shell**:
+### If you use a native Docker Engine inside WSL
+
+In this case, there is no separate `docker-desktop` virtual machine. The Docker daemon runs inside Ubuntu itself, and the volumes live in the WSL file system, usually under:
 
 ```bash
-docker exec namenode hdfs dfs -mkdir -p /user/root
-docker exec namenode hdfs dfs -mkdir -p /logs
-docker compose stop spark-master
-docker compose rm -f spark-master
-docker compose up -d spark-master
+/var/lib/docker/volumes
 ```
 
-These commands run `hdfs dfs` through the NameNode container and create two directories:
-- `/user/root`, where you will store input files
-- `/logs`, where Spark job logs will be stored so you can later inspect what was executed and whether it completed successfully
+You can inspect them with:
 
-You also restart the `spark-master` container so that the History Server works correctly.
+```bash
+sudo ls /var/lib/docker/volumes
+```
+
+or inspect a specific volume with:
+
+```bash
+sudo ls /var/lib/docker/volumes/<volume-name>/_data
+```
+
+In the lab, however, we prefer to work with `docker cp` and `docker exec`, so that the steps stay identical across both paths.
+
+**Initializing the HDFS file system:** The first time you create the environment, you must also create the required HDFS directories for uploading files and storing Spark execution logs.
+
+The safest path is to use the repository helper script, which:
+
+- waits until `namenode` becomes healthy
+- waits until the HDFS RPC endpoint responds
+- waits until HDFS safe mode ends
+- creates `/user/root`, `/user/root/examples`, and `/logs`
+- restarts `spark-master` so that the History Server reconnects to a ready HDFS
+
+From the **Ubuntu shell**, run:
+
+```bash
+bash init-hdfs.sh
+```
+
+The script is:
+
+<!-- AUTO-CODE: docker/01-lab1-spark-hdfs/init-hdfs.sh -->
+``` bash
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+MAX_ATTEMPTS=60
+SLEEP_SECONDS=2
+
+wait_for_namenode_health() {
+  local attempt health
+  for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
+    health="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}' namenode 2>/dev/null || true)"
+    echo "namenode health attempt ${attempt}/${MAX_ATTEMPTS}: ${health}"
+    if [ "$health" = "healthy" ]; then
+      return 0
+    fi
+    sleep "$SLEEP_SECONDS"
+  done
+
+  echo "NameNode did not become healthy in time." >&2
+  return 1
+}
+
+wait_for_hdfs_rpc() {
+  local attempt
+  for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
+    if docker exec namenode hdfs dfsadmin -report >/dev/null 2>&1; then
+      echo "HDFS RPC endpoint is responding."
+      return 0
+    fi
+    echo "HDFS RPC attempt ${attempt}/${MAX_ATTEMPTS}: not ready yet"
+    sleep "$SLEEP_SECONDS"
+  done
+
+  echo "HDFS RPC endpoint did not become ready in time." >&2
+  return 1
+}
+
+wait_for_safe_mode_to_end() {
+  local attempt safe_mode_output
+  for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
+    safe_mode_output="$(docker exec namenode hdfs dfsadmin -safemode get 2>/dev/null || true)"
+    echo "safe mode attempt ${attempt}/${MAX_ATTEMPTS}: ${safe_mode_output:-unknown}"
+    if ! printf '%s' "$safe_mode_output" | grep -q 'Safe mode is ON'; then
+      return 0
+    fi
+    sleep "$SLEEP_SECONDS"
+  done
+
+  echo "HDFS stayed in safe mode for too long." >&2
+  return 1
+}
+
+echo "Waiting for the NameNode container to become healthy..."
+wait_for_namenode_health
+
+echo "Waiting for the HDFS RPC endpoint to respond..."
+wait_for_hdfs_rpc
+
+# Ask HDFS to leave safe mode when it is already ready enough to accept admin commands.
+# If it has already left safe mode, this is a harmless no-op.
+docker exec namenode hdfs dfsadmin -safemode leave >/dev/null 2>&1 || true
+
+echo "Waiting for HDFS safe mode to end..."
+wait_for_safe_mode_to_end
+
+echo "Creating the lab directories in HDFS..."
+docker exec namenode hdfs dfs -mkdir -p /user/root /user/root/examples /logs
+
+echo "Restarting spark-master so the History Server reconnects to the ready HDFS..."
+docker compose restart spark-master
+
+echo "Local HDFS initialization completed."
+```
+<!-- END AUTO-CODE -->
 
 The reason we create `/logs` in HDFS is that the History Server does not read logs from the host file system. It reads Spark event logs from the same HDFS used by the jobs.
 
@@ -258,11 +391,7 @@ Now that we have an initialized HDFS file system and a working container stack, 
 
 ### Uploading code
 
-In the repository-based workflow, the recommended path is `docker cp` from the cloned repo, not manual copy through Docker Desktop volume paths.
-
-```
-\\wsl.localhost\docker-desktop\mnt\docker-desktop-disk\data\docker\volumes\01-lab1-spark-hdfs_spark-master-upload\_data
-```
+In the repository-based workflow, the recommended path is `docker cp` from the cloned repo, not manual copy through volume paths. This keeps the steps identical whether you use Docker Desktop or a native Docker Engine inside WSL.
 
 ![Figure 17](images/img17.png)
 
@@ -399,6 +528,7 @@ def main() -> None:
 if __name__ == "__main__":
     main()
 ```
+<!-- END AUTO-CODE -->
 
 If you change `wordcount.py` in the repository, rerun `docker cp` so the updated version is copied into the container.
 
@@ -415,10 +545,6 @@ This happens in **two stages**:
 2. Run `hdfs dfs -put` inside the `namenode` container to upload the file from `/mnt/upload` into HDFS.
 
 For this purpose, we again use `docker cp`, this time to copy the reference dataset into `namenode`.
-
-```
-\\wsl.localhost\docker-desktop\mnt\docker-desktop-disk\data\docker\volumes\01-lab1-spark-hdfs_namenode-upload\_data
-```
 
 From a WSL terminal, run:
 
@@ -603,7 +729,4 @@ This command:
 - deletes the persistent volumes, so the HDFS data, uploaded files, and execution logs are lost
 
 The next time you run `docker compose up --build -d`, the environment starts fresh and you must repeat the HDFS initialization steps.
-
-
-
 

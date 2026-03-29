@@ -6,7 +6,7 @@ This repository contains code, datasets, and execution guides for **Apache Spark
 
 ## 📘 Recommended Study / Execution Order (Markdown)
 
-- `01` [01_workstation-setup](docs/01_workstation-setup): Workstation setup with WSL 2 and Docker Desktop
+- `01` [01_workstation-setup](docs/01_workstation-setup): Workstation setup with WSL 2 and Docker
 - `02` [02_vscode-local-authoring](docs/02_vscode-local-authoring): Recommended and tested workflow for local Spark development with VS Code
 - `02` [02_pycharm-local-authoring](docs/02_pycharm-local-authoring): Alternative local development workflow for students who prefer PyCharm
 - `03` [03_local-spark-workbook](docs/03_local-spark-workbook): Local Spark practice with RDD, the DataFrame API, and Spark SQL
@@ -76,12 +76,13 @@ In the same step `02`, if you prefer another IDE, the repository also includes t
 
 ---
 
-## 🧱 Workstation Setup (WSL + Docker Desktop)
+## 🧱 Workstation Setup (WSL + Docker)
 
 📄 Guide: [`01_workstation-setup`](docs/01_workstation-setup)
 
 - Install WSL 2 and Ubuntu
-- Configure Docker Desktop to use the WSL backend
+- Recommended Docker Desktop setup with the WSL backend
+- Optional advanced alternative with a native Docker Engine inside WSL
 - Verify the installation with `hello-world`
 
 ---

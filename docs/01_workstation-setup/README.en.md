@@ -1,6 +1,6 @@
-# Workstation setup (WSL + Docker Desktop)
+# Workstation setup (WSL + Docker)
 
-The course includes a laboratory component in which we will use Docker containers. This guide describes the preparatory steps that should be completed before the first lab. In particular, it covers the setup of the Windows Subsystem for Linux (WSL), Ubuntu, and Docker Desktop on a personal computer.
+The course includes a laboratory component in which we will use Docker containers. This guide describes the preparatory steps that should be completed before the first lab. In particular, it covers the setup of the Windows Subsystem for Linux (WSL), Ubuntu, and Docker on a personal computer.
 
 ## Enabling WSL and Virtual Machine Platform
 
@@ -119,7 +119,16 @@ You will see the WSL version for each Linux distribution (for example, 2 for WSL
 
 If everything is configured correctly, WSL and Virtual Machine Platform should appear as enabled, and Ubuntu or another Linux distribution should be available for use on your system.
 
-## Installing Docker Desktop
+## Installing Docker for WSL
+
+This guide supports two paths:
+
+- **Recommended and tested**: `Docker Desktop` with WSL integration
+- **Optional advanced**: a native `Docker Engine` directly inside Ubuntu on WSL
+
+For most students, the recommended path is still `Docker Desktop`. The second path is useful if you prefer to work entirely from Ubuntu without a separate Docker Desktop application on Windows.
+
+### Recommended path: Docker Desktop
 
 Go to the official Docker page and download the latest version of Docker Desktop for Windows x86_64:
 
@@ -184,6 +193,57 @@ This command downloads and runs a simple Docker image that prints a success mess
 **Update Docker:** Docker Desktop updates automatically. You can check for new versions under **Settings** > **Updates**.
 
 **Resource settings:** In the **Resources** tab of Docker Desktop, you can configure how much CPU, memory (RAM), and disk space are available to the WSL backend.
+
+### Optional advanced alternative: native Docker Engine inside WSL
+
+If you do not want to use Docker Desktop, you can install a standard `Docker Engine` directly inside Ubuntu on WSL. We tested this path and it can run the `06_local-cluster-infrastructure-docker` guide, but it is a bit more demanding administratively.
+
+Before you start, check whether your WSL shell has `systemd` enabled:
+
+```bash
+systemctl is-system-running
+```
+
+If `systemd` is not available, add the following to `/etc/wsl.conf`:
+
+```ini
+[boot]
+systemd=true
+```
+
+and then, from Windows PowerShell, run:
+
+```powershell
+wsl --shutdown
+```
+
+Open Ubuntu again and continue with the installation:
+
+```bash
+sudo apt update
+sudo apt install -y ca-certificates curl gnupg
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo \"$VERSION_CODENAME\") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo systemctl enable --now docker
+sudo usermod -aG docker \"$USER\"
+newgrp docker
+docker version
+docker compose version
+docker run hello-world
+```
+
+If you use this path:
+
+- you do not need Docker Desktop on Windows for guide `06`
+- the Docker daemon runs inside Ubuntu
+- the Docker volumes live in the WSL file system, usually under `/var/lib/docker/volumes`
 
 ## Tools needed by the next guides
 
@@ -367,5 +427,4 @@ This option is required for the remote guides `04` and `05`, and it is also the 
 - For `02` and `03`, you may work either from PowerShell or from WSL.
 - For `04` and `05`, work only from WSL.
 - If you start locally on Windows, you can later create a second clone inside WSL just for the remote path.
-
 
