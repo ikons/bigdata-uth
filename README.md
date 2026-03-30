@@ -47,8 +47,10 @@ command -v spark-submit
 - `code/SQLQ*.py`: εκδοχές Spark SQL των βασικών ερωτημάτων
 - `examples/`: αρχεία CSV και κειμένου για δοκιμές (`employees`, `departments`, `text`)
 - `docker/`
-  - `01-lab1-spark-hdfs/`: Spark + HDFS setup με Docker Compose
-  - `02-lab2-spark-history-server/`: Spark History Server setup με Docker
+  - `images/`: επαναχρησιμοποιήσιμες Docker εικόνες για `spark-master`, `spark-worker` και `spark-history`
+  - `shared/`: κοινά Spark/Hadoop configs και shared scripts
+  - `stacks/local-spark-hdfs/`: τοπική στοίβα Spark + HDFS με automated HDFS bootstrap και History Server
+  - `stacks/history-server-lab/`: standalone History Server για ανάγνωση logs του εργαστηρίου
 - `docs/`: 📘 Όλοι οι οδηγοί σε μορφή Markdown
 - `templates/`: βασικά snippets ρυθμίσεων για WSL, Spark και Hadoop που εισάγονται αυτόματα στα docs
 - `odigoi/`: 🧾 Οδηγοί σε `.docx`
@@ -99,11 +101,12 @@ command -v spark-submit
 📄 Οδηγός: [`06_local-cluster-infrastructure-docker`](docs/06_local-cluster-infrastructure-docker)
 
 ```bash
-cd ~/bigdata-uth/docker/01-lab1-spark-hdfs
+cd ~/bigdata-uth/docker/stacks/local-spark-hdfs
 docker compose up --build -d
 ```
 
-- Spark UI: http://localhost:8080  
+- Spark UI: http://localhost:18080  
+- History Server: http://localhost:18081  
 - HDFS NameNode: http://localhost:9870  
 - Προαιρετική διαδρομή φορητότητας με τον ίδιο βασικό κώδικα του repo:
 ```bash

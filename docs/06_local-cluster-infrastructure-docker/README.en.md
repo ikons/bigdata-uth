@@ -118,7 +118,7 @@ To run the built image as a container, use the command above.
 
 The first time you run it, Docker downloads the required dependencies. On subsequent runs, this is no longer necessary.
 
-- **Docker Compose:** A tool that manages multiple containers through a `docker-compose.yml` file, defining services, networks, and persistent storage.
+- **Docker Compose:** A tool that manages multiple containers through a Compose file, defining services, networks, and persistent storage.
 - Docker containers have an **ephemeral file system**, so data stored only inside the container is lost when the container is removed.
 - **Volume:** A storage mechanism that lets containers preserve data even after restart or deletion. Docker uses **persistent volumes** for long-term storage. Volumes can be created, named, and mounted into containers.
 
@@ -127,42 +127,55 @@ The first time you run it, Docker downloads the required dependencies. On subseq
 Move to the example directory:
 
 ```bash
-cd ~/bigdata-uth/docker/01-lab1-spark-hdfs/
+cd ~/bigdata-uth/docker/stacks/local-spark-hdfs/
 ```
 
 Inside it you will find the following files:
 
-- **docker-compose.yml**: Creates a local infrastructure consisting of:
+- **compose.yml**: Creates a local infrastructure consisting of:
   - one HDFS cluster with one NameNode (`namenode`) and three DataNodes (`datanode1`, `datanode2`, `datanode3`)
   - one Spark cluster with one Master (`spark-master`) and four Workers (`spark-worker1`, `spark-worker2`, `spark-worker3`, `spark-worker4`)
-- **Dockerfile.master**: Dockerfile used to build the `spark-master` image, based on the official Apache Spark image.
-- **Dockerfile.worker**: Dockerfile used to build the worker images, also based on the official Apache Spark image.
-- **spark-defaults.conf**: Default Spark configuration shared by the master and workers.
-- **startup.sh** and **worker.sh**: Shell scripts executed when the `spark-master` and `spark-worker` containers start.
+  - one one-shot HDFS bootstrap service (`hdfs-init`)
+  - one dedicated Spark History Server (`spark-history`)
+
+This stack is built from shared Docker assets under the top-level `docker/` directory:
+
+- `docker/images/spark-master/`: reusable image for `spark-master`
+- `docker/images/spark-worker/`: reusable image for Spark workers
+- `docker/images/spark-history/`: reusable image for the dedicated History Server
+- `docker/shared/spark/spark-defaults.conf`: shared Spark configuration of the local stack
+- `docker/shared/scripts/hdfs-init.sh`: one-shot HDFS bootstrap script
+- `docker/shared/hadoop-conf/local-hdfs/`: Hadoop client configuration for the local HDFS
+- `init-hdfs.sh`: optional host-side wrapper for manually rerunning `hdfs-init`
 
 ## How the services connect to each other
 
 Before you start the commands, it is worth making the communication model of the local cluster explicit:
 
 - All containers join the same Docker network, `hadoop-net`.
-- Inside that network, the service names from `docker-compose.yml` also act as hostnames.
+- Inside that network, the service names from `compose.yml` also act as hostnames.
 - This means the Spark master reaches HDFS as `hdfs://namenode:9000`, and Spark workers reach the master as `spark://spark-master:7077`.
 - Spark jobs are submitted from the `spark-master` container, but their input and output data live in the HDFS of the same stack.
-- The History Server reads Spark event logs from HDFS, so it can display completed applications even after the executors have finished.
+- The one-shot `hdfs-init` service waits for HDFS and creates `/user/root`, `/user/root/examples`, and `/logs` automatically.
+- The dedicated `spark-history` container reads Spark event logs from HDFS, so it can display completed applications even after the executors have finished.
 - The named volumes preserve HDFS metadata, HDFS blocks, and temporary upload directories so they survive container restarts.
 
 In other words:
 
 - `namenode` and the `datanodes` form the HDFS subsystem
 - `spark-master` and `spark-worker1-4` form the Spark cluster
+- `spark-history` is a dedicated monitoring service and no longer runs inside `spark-master`
 - the shared Docker network lets those two subsystems communicate through names such as `namenode` and `spark-master`
+- `hdfs-init` prepares the required HDFS directory structure automatically
 - HDFS is the shared storage layer used both by Spark jobs and by the History Server
 
-**Starting the infrastructure:** Run the following command to launch the environment. **Important:** you must be inside the `01-lab1-spark-hdfs` directory for it to work correctly.
+**Starting the infrastructure:** Run the following command to launch the environment. **Important:** you must be inside `docker/stacks/local-spark-hdfs` for it to work correctly.
 
 ```bash
 docker compose up --build -d
 ```
+
+In this new version of the stack, HDFS initialization is performed automatically by the `hdfs-init` service. The main path of the guide no longer requires a manual `init-hdfs.sh` step after `docker compose up --build -d`.
 
 The first execution may take several minutes, especially if the Docker daemon has just started or if the larger images still need to be downloaded. If it seems slow, first confirm that `docker version` works from inside the WSL terminal and give the Docker daemon a little time to finish its startup sequence.
 
@@ -178,25 +191,27 @@ docker ps
 
 ![Figure 7](images/img7.png)
 
-If you use Docker Desktop, click on **01-lab1-spark-hdfs** to see the individual containers.
+If you use Docker Desktop, click on **local-spark-hdfs** to see the individual containers.
 
 ![Figure 8](images/img8.png)
 
 Whenever you see pairs of numbers such as `9870:9870`, it means that the container exposes a **service** (usually an HTTP site, but not necessarily). This service is **accessible from your host operating system**, either by clicking the link directly or by opening it in a browser.
 
-For example, `hdfs-namenode` serves:
+For example, the `namenode` container serves:
 
 http://localhost:9870
 
 ![Figure 9](images/img9.png)
 
 And `spark-master` serves the Spark UI at:
-- http://localhost:8080
-- http://localhost:8081 for the History Server (all jobs executed so far)
+- http://localhost:18080
+- http://localhost:18081 for the dedicated History Server (`spark-history`)
+
+The stack uses ports `18080` and `18081` instead of `8080` and `8081`, because on many Windows + WSL setups the lower ports are already reserved by the virtualization/networking stack and are not forwarded reliably to `localhost`.
 
 ![Figure 10](images/img10.png)
 
-In the **Volumes** section you can see all persistent volumes used by the stack. These volumes are declared in `docker-compose.yml` and are created automatically by `docker compose up`.
+In the **Volumes** section you can see all persistent volumes used by the stack. These volumes are declared in `compose.yml` and are created automatically by `docker compose up`.
 
 ![Figure 11](images/img11.png)
 
@@ -260,55 +275,35 @@ sudo ls /var/lib/docker/volumes/<volume-name>/_data
 
 In the lab, however, we prefer to work with `docker cp` and `docker exec`, so that the steps stay identical across both paths.
 
-**Initializing the HDFS file system:** The first time you create the environment, you must also create the required HDFS directories for uploading files and storing Spark execution logs.
+**Initializing the HDFS file system:** The first time you create the environment, the one-shot `hdfs-init` service automatically creates the required HDFS directories for file uploads and Spark event logs.
 
-The safest path is to use the repository helper script, which:
+This logic is now part of the Docker Compose stack itself, so:
 
-- waits until `namenode` becomes healthy
-- waits until the HDFS RPC endpoint responds
-- waits until HDFS safe mode ends
-- creates `/user/root`, `/user/root/examples`, and `/logs`
-- restarts `spark-master` so that the History Server reconnects to a ready HDFS
+- the main path no longer requires a manual step after `docker compose up --build -d`
+- the initialization is idempotent, so it can safely run again
+- `spark-history` starts as a separate service after the HDFS bootstrap is ready
 
-From the **Ubuntu shell**, run:
+The one-shot script that performs this bootstrap is:
 
-```bash
-bash init-hdfs.sh
-```
-
-The script is:
-
-<!-- AUTO-CODE: docker/01-lab1-spark-hdfs/init-hdfs.sh -->
+<!-- AUTO-CODE: docker/shared/scripts/hdfs-init.sh -->
 ``` bash
 #!/usr/bin/env bash
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+MAX_ATTEMPTS="${MAX_ATTEMPTS:-60}"
+SLEEP_SECONDS="${SLEEP_SECONDS:-2}"
+HDFS_URI="${HDFS_URI:-hdfs://namenode:9000}"
+HDFS_BIN="${HDFS_BIN:-/opt/hadoop-3.2.1/bin/hdfs}"
 
-MAX_ATTEMPTS=60
-SLEEP_SECONDS=2
-
-wait_for_namenode_health() {
-  local attempt health
-  for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
-    health="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}' namenode 2>/dev/null || true)"
-    echo "namenode health attempt ${attempt}/${MAX_ATTEMPTS}: ${health}"
-    if [ "$health" = "healthy" ]; then
-      return 0
-    fi
-    sleep "$SLEEP_SECONDS"
-  done
-
-  echo "NameNode did not become healthy in time." >&2
-  return 1
+hdfs_cmd() {
+  "${HDFS_BIN}" "$@"
 }
 
 wait_for_hdfs_rpc() {
   local attempt
   for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
-    if docker exec namenode hdfs dfsadmin -report >/dev/null 2>&1; then
+    if hdfs_cmd dfsadmin -fs "${HDFS_URI}" -report >/dev/null 2>&1; then
       echo "HDFS RPC endpoint is responding."
       return 0
     fi
@@ -323,7 +318,7 @@ wait_for_hdfs_rpc() {
 wait_for_safe_mode_to_end() {
   local attempt safe_mode_output
   for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
-    safe_mode_output="$(docker exec namenode hdfs dfsadmin -safemode get 2>/dev/null || true)"
+    safe_mode_output="$(hdfs_cmd dfsadmin -fs "${HDFS_URI}" -safemode get 2>/dev/null || true)"
     echo "safe mode attempt ${attempt}/${MAX_ATTEMPTS}: ${safe_mode_output:-unknown}"
     if ! printf '%s' "$safe_mode_output" | grep -q 'Safe mode is ON'; then
       return 0
@@ -335,28 +330,30 @@ wait_for_safe_mode_to_end() {
   return 1
 }
 
-echo "Waiting for the NameNode container to become healthy..."
-wait_for_namenode_health
-
 echo "Waiting for the HDFS RPC endpoint to respond..."
 wait_for_hdfs_rpc
 
 # Ask HDFS to leave safe mode when it is already ready enough to accept admin commands.
 # If it has already left safe mode, this is a harmless no-op.
-docker exec namenode hdfs dfsadmin -safemode leave >/dev/null 2>&1 || true
+hdfs_cmd dfsadmin -fs "${HDFS_URI}" -safemode leave >/dev/null 2>&1 || true
 
 echo "Waiting for HDFS safe mode to end..."
 wait_for_safe_mode_to_end
 
+# -mkdir -p makes the bootstrap idempotent. Re-running it repairs the expected
+# lab directories without requiring manual cleanup of the whole stack.
 echo "Creating the lab directories in HDFS..."
-docker exec namenode hdfs dfs -mkdir -p /user/root /user/root/examples /logs
+hdfs_cmd dfs -fs "${HDFS_URI}" -mkdir -p /user/root /user/root/examples /logs
 
-echo "Restarting spark-master so the History Server reconnects to the ready HDFS..."
-docker compose restart spark-master
-
-echo "Local HDFS initialization completed."
+echo "HDFS bootstrap completed."
 ```
 <!-- END AUTO-CODE -->
+
+If you ever want to rerun the same bootstrap manually for recovery or diagnostics, you can still do so from the same directory:
+
+```bash
+bash ./init-hdfs.sh
+```
 
 The reason we create `/logs` in HDFS is that the History Server does not read logs from the host file system. It reads Spark event logs from the same HDFS used by the jobs.
 
@@ -592,7 +589,7 @@ At this point the execution flow is:
 - `spark-master` assigns work to the available workers
 - the workers read the input data from `hdfs://namenode:9000`
 - the execution also writes event logs into HDFS
-- the History Server later reads those logs to display the application history
+- the dedicated `spark-history` service later reads those logs to display the application history
 
 ## Optional: Run the same reference scripts on the local cluster
 
@@ -657,15 +654,15 @@ If everything works, the repository achieves its main portability goal:
 
 You can watch the currently running job at:
 
-http://localhost:8080
+http://localhost:18080
 
 ![Figure 21](images/img21.png)
 
 ### History Server
 
-Apache Spark includes a useful service that stores log files from all submitted jobs across the master and worker nodes. This service is called the **History Server** and is available at:
+Apache Spark includes a useful service that stores log files from all submitted jobs across the master and worker nodes. In this refactored stack, the **History Server** runs as its own `spark-history` container and is available at:
 
-http://localhost:8081
+http://localhost:18081
 
 ![Figure 22](images/img22.png)
 
@@ -708,7 +705,7 @@ docker exec namenode hdfs dfs -put -f <local-path> <hdfs-path>
 
 ### Stopping the infrastructure
 
-The following command stops the infrastructure. Files uploaded to HDFS or saved in the persistent volumes of `namenode` and `spark-master` are **not** deleted and remain available. As with `docker compose up`, you must run it from the directory that contains `docker-compose.yml`.
+The following command stops the infrastructure. Files uploaded to HDFS or saved in the persistent volumes of `namenode` and `spark-master` are **not** deleted and remain available. As with `docker compose up`, you must run it from the directory that contains `compose.yml`.
 
 ```bash
 docker compose down
@@ -729,4 +726,3 @@ This command:
 - deletes the persistent volumes, so the HDFS data, uploaded files, and execution logs are lost
 
 The next time you run `docker compose up --build -d`, the environment starts fresh and you must repeat the HDFS initialization steps.
-

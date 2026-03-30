@@ -1,0 +1,3 @@
+<configuration>
+  <!-- Local stack: the default HDFS settings of the lab images are sufficient. -->
+</configuration>

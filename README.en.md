@@ -43,8 +43,10 @@ command -v spark-submit
 - `code/`: core Spark code in Python
 - `examples/`: Sample CSV/text files (`employees`, `departments`, `text`)
 - `docker/`
-  - `01-lab1-spark-hdfs/`: Spark + HDFS setup with Docker Compose
-  - `02-lab2-spark-history-server/`: Spark History Server setup with Docker
+  - `images/`: reusable Docker images for `spark-master`, `spark-worker`, and `spark-history`
+  - `shared/`: shared Spark/Hadoop configuration and helper scripts
+  - `stacks/local-spark-hdfs/`: local Spark + HDFS stack with automated HDFS bootstrap and a History Server
+  - `stacks/history-server-lab/`: standalone History Server stack for reading lab logs
 - `docs/`: 📘 All guides in Markdown format
 - `templates/`: core WSL, Spark, and Hadoop configuration snippets automatically inserted into the docs
 - `odigoi/`: 🧾 Guides in `.docx`
@@ -99,9 +101,13 @@ This lab sets up a local multi-container environment that includes:
 Example command:
 
 ```bash
-cd ~/bigdata-uth/docker/01-lab1-spark-hdfs
+cd ~/bigdata-uth/docker/stacks/local-spark-hdfs
 docker compose up --build -d
 ```
+
+- Spark UI: http://localhost:18080
+- History Server: http://localhost:18081
+- HDFS NameNode: http://localhost:9870
 
 Optional portability path with the same core code from the repo:
 

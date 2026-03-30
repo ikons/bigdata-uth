@@ -1,0 +1,3 @@
+<configuration>
+  <!-- Add lab-specific HDFS client properties here if the vdcloud setup needs them. -->
+</configuration>

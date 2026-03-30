@@ -1,0 +1,15 @@
+services:
+  spark-history-lab:
+    build:
+      context: ../../..
+      dockerfile: docker/images/spark-history/Dockerfile
+    container_name: spark-history-lab
+    restart: always
+    ports:
+      - "${SPARK_HISTORY_UI_HOST_PORT:-18081}:18081"
+    environment:
+      - SPARK_HISTORY_LOG_DIR=${SPARK_HISTORY_LOG_DIR:?Set SPARK_HISTORY_LOG_DIR in .env before starting the standalone History Server.}
+      - SPARK_HISTORY_UI_PORT=18081
+    volumes:
+      - ../../shared/hadoop-conf/lab-vdcloud/core-site.xml:/opt/spark/conf/core-site.xml:ro
+      - ../../shared/hadoop-conf/lab-vdcloud/hdfs-site.xml:/opt/spark/conf/hdfs-site.xml:ro

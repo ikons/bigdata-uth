@@ -1,24 +1,24 @@
 # Local Spark + HDFS lab stack:
 # - 1 HDFS NameNode
 # - 3 HDFS DataNodes
+# - 1 one-shot HDFS bootstrap service
 # - 1 Spark master
 # - 4 Spark workers
-# - named volumes for persistent HDFS state and simple file upload paths
+# - 1 dedicated Spark History Server
 services:
-  # ===================== HADOOP HDFS =====================
   namenode:
     image: bde2020/hadoop-namenode:latest
     container_name: namenode
     restart: always
     ports:
-      - "9870:9870"  # Web UI
-      - "9000:9000"  # HDFS
+      - "${NAMENODE_UI_HOST_PORT:-9870}:9870"
+      - "${NAMENODE_RPC_HOST_PORT:-9000}:9000"
     environment:
       - CLUSTER_NAME=hadoop-cluster
       - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
     volumes:
-      - namenode_data:/hadoop/dfs/name # Persist the HDFS namespace metadata across restarts.
-      - namenode-upload:/mnt/upload # Host-to-container upload area used before copying files into HDFS.
+      - namenode_data:/hadoop/dfs/name
+      - namenode-upload:/mnt/upload
     networks:
       - hadoop-net
 
@@ -29,7 +29,7 @@ services:
     environment:
       - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
     volumes:
-      - datanode1_data:/hadoop/dfs/data # Persist the HDFS blocks stored by datanode1.
+      - datanode1_data:/hadoop/dfs/data
     depends_on:
       - namenode
     networks:
@@ -42,7 +42,7 @@ services:
     environment:
       - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
     volumes:
-      - datanode2_data:/hadoop/dfs/data # Persist the HDFS blocks stored by datanode2.
+      - datanode2_data:/hadoop/dfs/data
     depends_on:
       - namenode
     networks:
@@ -55,41 +55,76 @@ services:
     environment:
       - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
     volumes:
-      - datanode3_data:/hadoop/dfs/data # Persist the HDFS blocks stored by datanode3.
+      - datanode3_data:/hadoop/dfs/data
     depends_on:
       - namenode
     networks:
       - hadoop-net
 
-  # ===================== SPARK =====================
+  hdfs-init:
+    image: bde2020/hadoop-namenode:latest
+    container_name: hdfs-init
+    restart: "no"
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - HDFS_URI=hdfs://namenode:9000
+    volumes:
+      - ../../shared/scripts/hdfs-init.sh:/hdfs-init.sh:ro
+    entrypoint: ["/bin/bash", "/hdfs-init.sh"]
+    depends_on:
+      namenode:
+        condition: service_healthy
+    networks:
+      - hadoop-net
+
   spark-master:
     build:
-        context: .
-        dockerfile: Dockerfile.master  # Build using the custom Dockerfile for the master
+      context: ../../..
+      dockerfile: docker/images/spark-master/Dockerfile
     container_name: spark-master
     restart: always
     ports:
-      - "8080:8080"  # Spark Web UI
-      - "7077:7077"  # Spark Master
-      - "8081:8081" # Spark History Server
+      - "${SPARK_MASTER_UI_HOST_PORT:-18080}:8080"
+      - "${SPARK_MASTER_RPC_HOST_PORT:-7077}:7077"
     environment:
       - SPARK_MASTER_HOST=spark-master
       - SPARK_HOME=/opt/spark
     volumes:
-      - spark-master-upload:/mnt/upload  # Upload area for Spark jobs copied from the host into the master container.
+      - spark-master-upload:/mnt/upload
     networks:
       - hadoop-net
     depends_on:
-      - namenode
+      hdfs-init:
+        condition: service_completed_successfully
+
+  spark-history:
+    build:
+      context: ../../..
+      dockerfile: docker/images/spark-history/Dockerfile
+    container_name: spark-history
+    restart: always
+    ports:
+      - "${SPARK_HISTORY_UI_HOST_PORT:-18081}:18081"
+    environment:
+      - SPARK_HISTORY_LOG_DIR=hdfs://namenode:9000/logs
+      - SPARK_HISTORY_UI_PORT=18081
+    volumes:
+      - ../../shared/hadoop-conf/local-hdfs/core-site.xml:/opt/spark/conf/core-site.xml:ro
+      - ../../shared/hadoop-conf/local-hdfs/hdfs-site.xml:/opt/spark/conf/hdfs-site.xml:ro
+    networks:
+      - hadoop-net
+    depends_on:
+      hdfs-init:
+        condition: service_completed_successfully
 
   spark-worker1:
     build:
-        context: .
-        dockerfile: Dockerfile.worker  # Build using the custom Dockerfile for the worker
+      context: ../../..
+      dockerfile: docker/images/spark-worker/Dockerfile
     container_name: spark-worker1
     restart: always
     ports:
-      - "8082:8081"  # Spark worker1 Web UI
+      - "${SPARK_WORKER1_UI_HOST_PORT:-18082}:8081"
     environment:
       - SPARK_MASTER=spark://spark-master:7077
       - SPARK_WORKER_CORES=2
@@ -101,12 +136,12 @@ services:
 
   spark-worker2:
     build:
-        context: .
-        dockerfile: Dockerfile.worker  # Build using the custom Dockerfile for the worker
+      context: ../../..
+      dockerfile: docker/images/spark-worker/Dockerfile
     container_name: spark-worker2
     restart: always
     ports:
-      - "8083:8081"  # Spark worker2 Web UI
+      - "${SPARK_WORKER2_UI_HOST_PORT:-18083}:8081"
     environment:
       - SPARK_MASTER=spark://spark-master:7077
       - SPARK_WORKER_CORES=2
@@ -118,12 +153,12 @@ services:
 
   spark-worker3:
     build:
-        context: .
-        dockerfile: Dockerfile.worker  # Build using the custom Dockerfile for the worker
+      context: ../../..
+      dockerfile: docker/images/spark-worker/Dockerfile
     container_name: spark-worker3
     restart: always
     ports:
-      - "8084:8081"  # Spark worker3 Web UI
+      - "${SPARK_WORKER3_UI_HOST_PORT:-18084}:8081"
     environment:
       - SPARK_MASTER=spark://spark-master:7077
       - SPARK_WORKER_CORES=2
@@ -135,12 +170,12 @@ services:
 
   spark-worker4:
     build:
-        context: .
-        dockerfile: Dockerfile.worker  # Build using the custom Dockerfile for the worker
+      context: ../../..
+      dockerfile: docker/images/spark-worker/Dockerfile
     container_name: spark-worker4
     restart: always
     ports:
-      - "8085:8081"  # Spark worker4 Web UI
+      - "${SPARK_WORKER4_UI_HOST_PORT:-18085}:8081"
     environment:
       - SPARK_MASTER=spark://spark-master:7077
       - SPARK_WORKER_CORES=2
@@ -151,7 +186,6 @@ services:
       - hadoop-net
 
 volumes:
-  # Named volumes keep state outside container lifetimes.
   namenode_data:
   namenode-upload:
   datanode1_data:
@@ -160,6 +194,4 @@ volumes:
   spark-master-upload:
 
 networks:
-  # Every container joins the same bridge network so service names such as
-  # `namenode` and `spark-master` become resolvable hostnames inside the stack.
   hadoop-net:
