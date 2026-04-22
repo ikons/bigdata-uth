@@ -82,25 +82,32 @@ export SPARK_CONF_DIR="$HOME/.spark/conf"
 export HADOOP_CONF_DIR="$HOME/.hadoop/conf"
 export PATH="$HOME/.local/bin:$SPARK_HOME/bin:$HADOOP_HOME/bin:$PATH"
 export KUBE_EDITOR=nano
-export HADOOP_USER_NAME="$USER"
+export VDCLOUD_USER="your_vdcloud_username"
+export HADOOP_USER_NAME="$VDCLOUD_USER"
 ```
 <!-- END AUTO-CODE -->
 
-Then source this file from both `~/.profile` and `~/.bashrc`.
+> **Important:** Replace `your_vdcloud_username` with the username assigned to you by the lab (the one shown in the connection email). This username may differ from your WSL Linux username and is used for HDFS paths and Kubernetes namespaces.
 
-In `~/.profile`:
+### Activating the environment in every new shell
 
-<!-- AUTO-CODE: templates/wsl/load-bigdata-env.sh -->
-``` bash
-if [ -f "$HOME/bigdata-env.sh" ]; then
-    . "$HOME/bigdata-env.sh"
-fi
+Bash reads a different startup file depending on how a shell is opened:
+
+- `~/.profile` — read once when a **login shell** starts (each time WSL opens). Environment variables set here are inherited by child processes, including those launched by `spark-submit`.
+- `~/.bashrc` — read for each new **interactive shell** (for example, every time you open a new terminal tab).
+
+To make `bigdata-env.sh` load automatically in both cases, run:
+
+```bash
+echo '. ~/bigdata-env.sh' >> ~/.profile
+echo '. ~/bigdata-env.sh' >> ~/.bashrc
 ```
-<!-- END AUTO-CODE -->
 
-In `~/.bashrc`, place the same snippet before the early non-interactive `return`.
+The `>>` operator **appends** one line to the file without overwriting anything. The `.` is shorthand for `source` — it executes the named file inside the current shell.
 
-Finally:
+> **Run each command exactly once.** Running either command a second time appends a duplicate line. If that happens, open the file with `nano ~/.profile` or `nano ~/.bashrc` and delete the extra line.
+
+Apply the changes to the current session without restarting:
 
 ```bash
 . ~/.profile
@@ -178,7 +185,7 @@ Then verify:
 
 ```bash
 hdfs dfs -ls /
-hdfs dfs -ls /user/$USER
+hdfs dfs -ls /user/$VDCLOUD_USER
 ```
 
 ## 5. Per-user `spark-defaults.conf`
@@ -223,13 +230,13 @@ From the repository root:
 
 ```bash
 cd ~/bigdata-uth
-hdfs dfs -rm -r -f /user/$USER/examples /user/$USER/code /user/$USER/logs || true
-hdfs dfs -mkdir -p /user/$USER/logs /user/$USER/examples /user/$USER/code
-hdfs dfs -put -f examples/* /user/$USER/examples/
-hdfs dfs -put -f code/*.py /user/$USER/code/
+hdfs dfs -rm -r -f /user/$VDCLOUD_USER/examples /user/$VDCLOUD_USER/code /user/$VDCLOUD_USER/logs || true
+hdfs dfs -mkdir -p /user/$VDCLOUD_USER/logs /user/$VDCLOUD_USER/examples /user/$VDCLOUD_USER/code
+hdfs dfs -put -f examples/* /user/$VDCLOUD_USER/examples/
+hdfs dfs -put -f code/*.py /user/$VDCLOUD_USER/code/
 
-hdfs dfs -ls /user/$USER/examples
-hdfs dfs -ls /user/$USER/code
+hdfs dfs -ls /user/$VDCLOUD_USER/examples
+hdfs dfs -ls /user/$VDCLOUD_USER/code
 ```
 
 The cleanup line is optional, but useful when you repeat the walkthrough and want clean folders without stale uploads.
@@ -239,8 +246,8 @@ The cleanup line is optional, but useful when you repeat the walkthrough and wan
 Once `spark-defaults.conf` is configured, the first submit becomes very simple:
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER/code/wordcount.py \
-  --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER
+spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/wordcount.py \
+  --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
 The canonical code for the example is:
@@ -361,22 +368,22 @@ if __name__ == "__main__":
 After submission:
 
 ```bash
-kubectl -n "$USER-priv" get pods -o wide
-kubectl -n "$USER-priv" logs <driver-pod-name>
-kubectl -n "$USER-priv" describe pod <driver-pod-name>
+kubectl -n "$VDCLOUD_USER-priv" get pods -o wide
+kubectl -n "$VDCLOUD_USER-priv" logs <driver-pod-name>
+kubectl -n "$VDCLOUD_USER-priv" describe pod <driver-pod-name>
 ```
 
 If you use `k9s`:
 
 ```bash
-k9s -n "$USER-priv"
+k9s -n "$VDCLOUD_USER-priv"
 ```
 
 Then check output and event logs:
 
 ```bash
-hdfs dfs -ls /user/$USER | grep wordcount_output
-hdfs dfs -ls /user/$USER/logs | tail -n 5
+hdfs dfs -ls /user/$VDCLOUD_USER | grep wordcount_output
+hdfs dfs -ls /user/$VDCLOUD_USER/logs | tail -n 5
 ```
 
 ## Troubleshooting

@@ -82,25 +82,32 @@ export SPARK_CONF_DIR="$HOME/.spark/conf"
 export HADOOP_CONF_DIR="$HOME/.hadoop/conf"
 export PATH="$HOME/.local/bin:$SPARK_HOME/bin:$HADOOP_HOME/bin:$PATH"
 export KUBE_EDITOR=nano
-export HADOOP_USER_NAME="$USER"
+export VDCLOUD_USER="your_vdcloud_username"
+export HADOOP_USER_NAME="$VDCLOUD_USER"
 ```
 <!-- END AUTO-CODE -->
 
-Στη συνέχεια φορτώστε το ίδιο αρχείο τόσο από το `~/.profile` όσο και από το `~/.bashrc`.
+> **Σημαντικό:** Αντικαταστήστε το `your_vdcloud_username` με το username που σας απέδωσε το εργαστήριο (αυτό που αναγράφεται στο email σύνδεσης). Το username αυτό μπορεί να διαφέρει από το Linux username του WSL σας και χρησιμοποιείται για HDFS paths και Kubernetes namespaces.
 
-Στο `~/.profile`:
+### Ενεργοποίηση του περιβάλλοντος σε κάθε νέο shell
 
-<!-- AUTO-CODE: templates/wsl/load-bigdata-env.sh -->
-``` bash
-if [ -f "$HOME/bigdata-env.sh" ]; then
-    . "$HOME/bigdata-env.sh"
-fi
+Το Bash διαβάζει διαφορετικό αρχείο εκκίνησης ανάλογα με τον τρόπο που ανοίγει ένα shell:
+
+- `~/.profile` — διαβάζεται μία φορά κατά την εκκίνηση ενός **login shell** (κάθε φορά που ανοίγει το WSL). Οι μεταβλητές που ορίζονται εδώ κληρονομούνται από τις θυγατρικές διεργασίες, συμπεριλαμβανομένων αυτών που εκκινεί το `spark-submit`.
+- `~/.bashrc` — διαβάζεται σε κάθε νέο **interactive shell** (π.χ. κάθε φορά που ανοίγετε νέα καρτέλα τερματικού).
+
+Για να φορτώνεται αυτόματα το `bigdata-env.sh` και στις δύο περιπτώσεις, εκτελέστε:
+
+```bash
+echo '. ~/bigdata-env.sh' >> ~/.profile
+echo '. ~/bigdata-env.sh' >> ~/.bashrc
 ```
-<!-- END AUTO-CODE -->
 
-Στο `~/.bashrc`, βάλτε το ίδιο snippet πριν από το early `return` του non-interactive shell.
+Ο τελεστής `>>` **προσθέτει** μία γραμμή στο αρχείο χωρίς να διαγράψει το υπόλοιπο περιεχόμενο. Ο τελεστής `.` είναι συντομογραφία του `source` — εκτελεί το αρχείο μέσα στο τρέχον shell.
 
-Τέλος:
+> **Εκτελέστε κάθε εντολή ακριβώς μία φορά.** Αν εκτελεστεί ξανά, η γραμμή θα προστεθεί δεύτερη φορά. Αν συμβεί αυτό, ανοίξτε το αρχείο με `nano ~/.profile` ή `nano ~/.bashrc` και διαγράψτε τη διπλή γραμμή.
+
+Εφαρμόστε τις αλλαγές στο τρέχον session χωρίς επανεκκίνηση:
 
 ```bash
 . ~/.profile
@@ -178,7 +185,7 @@ nano ~/.hadoop/conf/core-site.xml
 
 ```bash
 hdfs dfs -ls /
-hdfs dfs -ls /user/$USER
+hdfs dfs -ls /user/$VDCLOUD_USER
 ```
 
 ## 5. Προσωπικό `spark-defaults.conf`
@@ -223,13 +230,13 @@ spark.history.fs.logDirectory                  hdfs://hdfs-namenode.default.svc.
 
 ```bash
 cd ~/bigdata-uth
-hdfs dfs -rm -r -f /user/$USER/examples /user/$USER/code /user/$USER/logs || true
-hdfs dfs -mkdir -p /user/$USER/logs /user/$USER/examples /user/$USER/code
-hdfs dfs -put -f examples/* /user/$USER/examples/
-hdfs dfs -put -f code/*.py /user/$USER/code/
+hdfs dfs -rm -r -f /user/$VDCLOUD_USER/examples /user/$VDCLOUD_USER/code /user/$VDCLOUD_USER/logs || true
+hdfs dfs -mkdir -p /user/$VDCLOUD_USER/logs /user/$VDCLOUD_USER/examples /user/$VDCLOUD_USER/code
+hdfs dfs -put -f examples/* /user/$VDCLOUD_USER/examples/
+hdfs dfs -put -f code/*.py /user/$VDCLOUD_USER/code/
 
-hdfs dfs -ls /user/$USER/examples
-hdfs dfs -ls /user/$USER/code
+hdfs dfs -ls /user/$VDCLOUD_USER/examples
+hdfs dfs -ls /user/$VDCLOUD_USER/code
 ```
 
 Η γραμμή με το cleanup είναι προαιρετική, αλλά χρήσιμη όταν ξανατρέχετε τον οδηγό και θέλετε καθαρούς φακέλους χωρίς παλιά uploads.
@@ -239,8 +246,8 @@ hdfs dfs -ls /user/$USER/code
 Αφού το `spark-defaults.conf` είναι ήδη ρυθμισμένο, το πρώτο submit μένει πολύ απλό:
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER/code/wordcount.py \
-  --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$USER
+spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/wordcount.py \
+  --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
 Ο βασικός κώδικας του παραδείγματος είναι:
@@ -361,22 +368,22 @@ if __name__ == "__main__":
 Μετά το submit:
 
 ```bash
-kubectl -n "$USER-priv" get pods -o wide
-kubectl -n "$USER-priv" logs <driver-pod-name>
-kubectl -n "$USER-priv" describe pod <driver-pod-name>
+kubectl -n "$VDCLOUD_USER-priv" get pods -o wide
+kubectl -n "$VDCLOUD_USER-priv" logs <driver-pod-name>
+kubectl -n "$VDCLOUD_USER-priv" describe pod <driver-pod-name>
 ```
 
 Αν χρησιμοποιείς `k9s`:
 
 ```bash
-k9s -n "$USER-priv"
+k9s -n "$VDCLOUD_USER-priv"
 ```
 
 Έπειτα έλεγξε output και event logs:
 
 ```bash
-hdfs dfs -ls /user/$USER | grep wordcount_output
-hdfs dfs -ls /user/$USER/logs | tail -n 5
+hdfs dfs -ls /user/$VDCLOUD_USER | grep wordcount_output
+hdfs dfs -ls /user/$VDCLOUD_USER/logs | tail -n 5
 ```
 
 ## Αντιμετώπιση προβλημάτων

@@ -622,7 +622,7 @@ In this local stack:
 - the reference `spark-submit` script lives under `/mnt/upload/code/...` on `spark-master`
 - the input datasets live under `hdfs://namenode:9000/user/root/examples/...`
 - the `--base-path` is `hdfs://namenode:9000/user/root`
-- you do not use `/user/$USER`, unlike the remote Kubernetes path
+- you do not use `/user/$VDCLOUD_USER`, unlike the remote Kubernetes path
 
 Start with a small portability matrix of 3 scripts:
 

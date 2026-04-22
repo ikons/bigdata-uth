@@ -638,7 +638,7 @@ docker exec namenode bash -c 'hdfs dfs -rm -r -f /user/root/examples || true; hd
 - το βασικό αρχείο κώδικα για το `spark-submit` βρίσκεται στο `/mnt/upload/code/...` του `spark-master`
 - τα input datasets ζουν στο `hdfs://namenode:9000/user/root/examples/...`
 - το `--base-path` είναι `hdfs://namenode:9000/user/root`
-- δεν χρησιμοποιείς `/user/$USER`, όπως στην απομακρυσμένη ροή Kubernetes
+- δεν χρησιμοποιείς `/user/$VDCLOUD_USER`, όπως στην απομακρυσμένη ροή Kubernetes
 
 Δοκίμασε πρώτα ένα μικρό σύνολο δοκιμών φορητότητας με 3 αρχεία:
 

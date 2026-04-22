@@ -8,4 +8,5 @@ export SPARK_CONF_DIR="$HOME/.spark/conf"
 export HADOOP_CONF_DIR="$HOME/.hadoop/conf"
 export PATH="$HOME/.local/bin:$SPARK_HOME/bin:$HADOOP_HOME/bin:$PATH"
 export KUBE_EDITOR=nano
-export HADOOP_USER_NAME="$USER"
+export VDCLOUD_USER="your_vdcloud_username"
+export HADOOP_USER_NAME="$VDCLOUD_USER"
