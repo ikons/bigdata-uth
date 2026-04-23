@@ -177,7 +177,7 @@ hadoop fs -ls /user/$VDCLOUD_USER/code
 | Appendix   | Toy join example on in-memory data                               | RDD            |
 | Word Count | Count word occurrences in a text file                            | RDD            |
 
-📈 The above queries can be inspected through the Spark History Server (see the end of [05_cluster-queries-rdd-df-sql](docs/05_cluster-queries-rdd-df-sql)).
+📈 The above queries can be inspected through the Spark History Server, as described in the `History Server` section of [06_local-cluster-infrastructure-docker](docs/06_local-cluster-infrastructure-docker).
 
 Example:
 

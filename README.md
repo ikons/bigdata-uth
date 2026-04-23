@@ -175,7 +175,7 @@ hadoop fs -ls /user/$VDCLOUD_USER/code
 | Παράρτημα     | Απλοποιημένο παράδειγμα join με δεδομένα στη μνήμη         | RDD                      |
 | Word Count    | Καταμέτρηση λέξεων σε αρχείο κειμένου                      | RDD                      |
 
-📈 Τα παραπάνω ερωτήματα μπορούν να παρακολουθηθούν μέσω του Spark History Server, όπως περιγράφεται στο τέλος του [05_cluster-queries-rdd-df-sql](docs/05_cluster-queries-rdd-df-sql).
+📈 Τα παραπάνω ερωτήματα μπορούν να παρακολουθηθούν μέσω του Spark History Server, όπως περιγράφεται στην ενότητα `Διακομιστής ιστορικού` του [06_local-cluster-infrastructure-docker](docs/06_local-cluster-infrastructure-docker).
 
 ### Παράδειγμα εκτέλεσης:
 
