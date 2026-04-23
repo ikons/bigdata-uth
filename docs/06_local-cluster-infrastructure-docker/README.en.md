@@ -658,7 +658,7 @@ http://localhost:18080
 
 ![Figure 21](images/img21.png)
 
-### History Server
+## History Server
 
 Apache Spark includes a useful service that stores log files from all submitted jobs across the master and worker nodes. In this refactored stack, the **History Server** runs as its own `spark-history` container and is available at:
 
