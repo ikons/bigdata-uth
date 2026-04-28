@@ -64,16 +64,37 @@ hadoop version
 Κρατήστε τις διαδρομές σε ένα κοινό αρχείο, όχι σκορπισμένες στο `~/.bashrc`.
 
 ```bash
+cd ~/bigdata-uth
 mkdir -p ~/.spark/conf ~/.hadoop/conf
+cp templates/wsl/bigdata-env.sh ~/bigdata-env.sh
 nano ~/bigdata-env.sh
 ```
 
-Βάλε μέσα:
+Στο πάνω μέρος του αρχείου άλλαξε μόνο τη γραμμή:
+
+```bash
+export VDCLOUD_USER="your_vdcloud_username"
+```
+
+και βάλε το username που σου απέδωσε το εργαστήριο, π.χ.:
+
+```bash
+export VDCLOUD_USER="ikons"
+```
+
+Δεν χρειάζεται να το αντιγράψεις με το χέρι. Για έλεγχο, το αρχείο που αντέγραψες περιέχει:
 
 <!-- AUTO-CODE: templates/wsl/bigdata-env.sh -->
 ``` bash
 # Shared Spark/Hadoop/Kubernetes environment for the lab WSL setup.
 # Default baseline: Spark 3.5.8 + Hadoop client 3.4.1 + Java 11.
+#
+# This file is sourced by interactive shells. Keep top-level code idempotent:
+# exports and function definitions are safe, but setup actions should happen
+# only when you call an explicit helper function.
+
+# Change this one line to the username assigned by the vdcloud lab.
+export VDCLOUD_USER="your_vdcloud_username"
 
 export SPARK_HOME="$HOME/spark-3.5.8-bin-hadoop3"
 export HADOOP_HOME="$HOME/hadoop-3.4.1"
@@ -82,12 +103,71 @@ export SPARK_CONF_DIR="$HOME/.spark/conf"
 export HADOOP_CONF_DIR="$HOME/.hadoop/conf"
 export PATH="$HOME/.local/bin:$SPARK_HOME/bin:$HADOOP_HOME/bin:$PATH"
 export KUBE_EDITOR=nano
-export VDCLOUD_USER="your_vdcloud_username"
 export HADOOP_USER_NAME="$VDCLOUD_USER"
+export HADOOP_ROOT_LOGGER=ERROR,console
+
+bigdata_require_vdcloud_user() {
+    local placeholder
+    placeholder="$(printf '%s_%s_%s' your vdcloud username)"
+
+    if [ -z "${VDCLOUD_USER:-}" ] || [ "$VDCLOUD_USER" = "$placeholder" ]; then
+        echo "Set VDCLOUD_USER in ~/bigdata-env.sh first." >&2
+        return 1
+    fi
+}
+
+bigdata_write_spark_defaults() {
+    # Spark does not expand shell variables inside spark-defaults.conf.
+    # Generate the file from VDCLOUD_USER so the final config is explicit
+    # and easy to inspect when debugging a failed submit.
+    bigdata_require_vdcloud_user || return 1
+
+    mkdir -p "$SPARK_CONF_DIR"
+
+    cat > "$SPARK_CONF_DIR/spark-defaults.conf" <<EOF
+# Generated from ~/bigdata-env.sh for VDCLOUD_USER=${VDCLOUD_USER}.
+
+spark.master                                   k8s://https://source-code-master.cluster.local:6443
+spark.submit.deployMode                        cluster
+spark.kubernetes.namespace                     ${VDCLOUD_USER}-priv
+spark.kubernetes.authenticate.driver.serviceAccountName spark
+spark.kubernetes.container.image               apache/spark:3.5.8-scala2.12-java11-python3-ubuntu
+spark.executor.instances                       1
+spark.kubernetes.submission.waitAppCompletion  false
+spark.kubernetes.driverEnv.HADOOP_USER_NAME    ${VDCLOUD_USER}
+spark.executorEnv.HADOOP_USER_NAME             ${VDCLOUD_USER}
+spark.kubernetes.file.upload.path              hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/${VDCLOUD_USER}/.spark-upload
+spark.eventLog.enabled                         true
+spark.eventLog.dir                             hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/${VDCLOUD_USER}/logs
+spark.history.fs.logDirectory                  hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/${VDCLOUD_USER}/logs
+EOF
+
+    echo "Wrote $SPARK_CONF_DIR/spark-defaults.conf"
+}
+
+bigdata_write_history_env() {
+    # The standalone History Server is a Docker stack. It also needs the same
+    # HDFS identity, because each student's event logs are private.
+    bigdata_require_vdcloud_user || return 1
+
+    local stack_dir="${1:-$HOME/bigdata-uth/docker/stacks/history-server-lab}"
+    if [ ! -d "$stack_dir" ]; then
+        echo "History Server stack not found: $stack_dir" >&2
+        return 1
+    fi
+
+    cat > "$stack_dir/.env" <<EOF
+SPARK_HISTORY_UI_HOST_PORT=18081
+HADOOP_USER_NAME=${VDCLOUD_USER}
+SPARK_HISTORY_LOG_DIR=hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/${VDCLOUD_USER}/logs
+EOF
+
+    echo "Wrote $stack_dir/.env"
+}
 ```
 <!-- END AUTO-CODE -->
 
-> **Σημαντικό:** Αντικαταστήστε το `your_vdcloud_username` με το username που σας απέδωσε το εργαστήριο (αυτό που αναγράφεται στο email σύνδεσης). Το username αυτό μπορεί να διαφέρει από το Linux username του WSL σας και χρησιμοποιείται για HDFS paths και Kubernetes namespaces.
+> **Σημαντικό:** Το `VDCLOUD_USER` μπορεί να διαφέρει από το Linux username του WSL σας και χρησιμοποιείται για HDFS paths και Kubernetes namespaces.
 
 ### Ενεργοποίηση του περιβάλλοντος σε κάθε νέο shell
 
@@ -154,7 +234,7 @@ kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}{"\n"}'
 ```bash
 getent hosts source-code-master.cluster.local
 getent hosts hdfs-namenode.default.svc.cluster.local
-kubectl -n YOUR_USERNAME-priv get sa spark
+kubectl -n "$VDCLOUD_USER-priv" get sa spark
 ```
 
 ## 4. Ρύθμιση του Hadoop client
@@ -162,11 +242,13 @@ kubectl -n YOUR_USERNAME-priv get sa spark
 Κρατήστε το HDFS config σε per-user διαδρομή, χωρίς να πειράζετε τα unpacked binaries.
 
 ```bash
+cd ~/bigdata-uth
 mkdir -p ~/.hadoop/conf
-nano ~/.hadoop/conf/core-site.xml
+cp templates/wsl/core-site.xml ~/.hadoop/conf/core-site.xml
+cp templates/wsl/log4j.properties ~/.hadoop/conf/log4j.properties
 ```
 
-Βάλε μέσα:
+Το `core-site.xml` περιέχει:
 
 <!-- AUTO-CODE: templates/wsl/core-site.xml -->
 ``` xml
@@ -181,6 +263,8 @@ nano ~/.hadoop/conf/core-site.xml
 
 Αν το εργαστήριο δώσει και `hdfs-site.xml`, βάλ' το επίσης στο `~/.hadoop/conf/`.
 
+Το `log4j.properties` είναι μόνο για να μη βγάζει κάθε `hdfs` εντολή το warning `log4j.properties is not found`.
+
 Έπειτα έλεγξε:
 
 ```bash
@@ -192,61 +276,74 @@ hdfs dfs -ls /user/$VDCLOUD_USER
 
 Η πιο πρακτική λύση για τους φοιτητές είναι η λειτουργία συστοιχίας του Kubernetes να είναι η προεπιλογή του `spark-submit` στο WSL.
 
-Δημιούργησε:
+Το `spark-defaults.conf` πρέπει να περιέχει πραγματικές τιμές, όχι shell variables. Δημιούργησέ το από το `VDCLOUD_USER` που έχεις ήδη ορίσει στο `~/bigdata-env.sh`:
 
 ```bash
-mkdir -p ~/.spark/conf
-nano ~/.spark/conf/spark-defaults.conf
+source ~/bigdata-env.sh
+bigdata_write_spark_defaults
+cat ~/.spark/conf/spark-defaults.conf
 ```
 
-και βάλε:
+Το helper function γράφει το παρακάτω template με το δικό σου vdcloud username:
 
 <!-- AUTO-CODE: templates/wsl/spark-defaults.conf -->
 ``` properties
-# Replace YOUR_USERNAME with your lab username before first use.
+# Example output written by bigdata_write_spark_defaults.
+# The real file contains your actual VDCLOUD_USER value.
 
 spark.master                                   k8s://https://source-code-master.cluster.local:6443
 spark.submit.deployMode                        cluster
-spark.kubernetes.namespace                     YOUR_USERNAME-priv
+spark.kubernetes.namespace                     VDCLOUD_USER-priv
 spark.kubernetes.authenticate.driver.serviceAccountName spark
 spark.kubernetes.container.image               apache/spark:3.5.8-scala2.12-java11-python3-ubuntu
 spark.executor.instances                       1
 spark.kubernetes.submission.waitAppCompletion  false
+spark.kubernetes.driverEnv.HADOOP_USER_NAME    VDCLOUD_USER
+spark.executorEnv.HADOOP_USER_NAME             VDCLOUD_USER
+spark.kubernetes.file.upload.path              hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/VDCLOUD_USER/.spark-upload
 spark.eventLog.enabled                         true
-spark.eventLog.dir                             hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/YOUR_USERNAME/logs
-spark.history.fs.logDirectory                  hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/YOUR_USERNAME/logs
+spark.eventLog.dir                             hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/VDCLOUD_USER/logs
+spark.history.fs.logDirectory                  hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/VDCLOUD_USER/logs
 ```
 <!-- END AUTO-CODE -->
 
 Πριν από το πρώτο submit:
 
-- αντικατάστησε το `YOUR_USERNAME`
+- έλεγξε ότι στο αρχείο εμφανίζεται το δικό σου vdcloud username
 - βεβαιώσου ότι το `spark.master` συμφωνεί με το kubeconfig
 - κράτα το image pinned, όχι σκέτο `apache/spark`
+- κράτα τις τρεις ρυθμίσεις `HADOOP_USER_NAME` και `spark.kubernetes.file.upload.path`, γιατί τα HDFS home directories είναι ιδιωτικά
 
-## 6. Πρώτη μεταφόρτωση στο HDFS
+## 6. Έλεγχος προσωπικού HDFS χώρου
 
 Από τη ρίζα του cloned repo:
 
 ```bash
 cd ~/bigdata-uth
-hdfs dfs -rm -r -f /user/$VDCLOUD_USER/examples /user/$VDCLOUD_USER/code /user/$VDCLOUD_USER/logs || true
-hdfs dfs -mkdir -p /user/$VDCLOUD_USER/logs /user/$VDCLOUD_USER/examples /user/$VDCLOUD_USER/code
-hdfs dfs -put -f examples/* /user/$VDCLOUD_USER/examples/
-hdfs dfs -put -f code/*.py /user/$VDCLOUD_USER/code/
-
-hdfs dfs -ls /user/$VDCLOUD_USER/examples
-hdfs dfs -ls /user/$VDCLOUD_USER/code
+hdfs dfs -ls -d /user/$VDCLOUD_USER
+hdfs dfs -ls -d /user/$VDCLOUD_USER/.spark-upload
+hdfs dfs -ls -d /user/$VDCLOUD_USER/logs
 ```
 
-Η γραμμή με το cleanup είναι προαιρετική, αλλά χρήσιμη όταν ξανατρέχετε τον οδηγό και θέλετε καθαρούς φακέλους χωρίς παλιά uploads.
+Οι κατάλογοι `/user/$VDCLOUD_USER`, `.spark-upload` και `logs` δημιουργούνται από το εργαστήριο όταν δημιουργείται ο λογαριασμός. Πρέπει να υπάρχουν ήδη και να είναι ιδιωτικοί. Αν λείπει κάποιος από αυτούς, μην αλλάξεις permissions μόνος σου· ενημέρωσε τον διδάσκοντα.
+
+Για τα παραδείγματα του οδηγού, ανέβασε μόνο τα δεδομένα:
+
+```bash
+hdfs dfs -mkdir -p /user/$VDCLOUD_USER/examples
+hdfs dfs -chmod 700 /user/$VDCLOUD_USER/examples
+hdfs dfs -put -f examples/* /user/$VDCLOUD_USER/examples/
+hdfs dfs -ls /user/$VDCLOUD_USER/examples
+```
+
+Δεν ανεβάζουμε τα `code/*.py` στο HDFS. Τα scripts μένουν τοπικά στο WSL και το Spark τα ανεβάζει προσωρινά στο ιδιωτικό `/user/$VDCLOUD_USER/.spark-upload` όταν τα περνάμε στο `spark-submit`.
 
 ## 7. Πρώτο `spark-submit`
 
 Αφού το `spark-defaults.conf` είναι ήδη ρυθμισμένο, το πρώτο submit μένει πολύ απλό:
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/wordcount.py \
+spark-submit code/wordcount.py \
   --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
@@ -384,7 +481,42 @@ k9s -n "$VDCLOUD_USER-priv"
 ```bash
 hdfs dfs -ls /user/$VDCLOUD_USER | grep wordcount_output
 hdfs dfs -ls /user/$VDCLOUD_USER/logs | tail -n 5
+hdfs dfs -ls /user/$VDCLOUD_USER/.spark-upload
 ```
+
+Όταν δεν τρέχει πλέον job του χρήστη, μπορείς να καθαρίσεις τα προσωρινά staged scripts:
+
+```bash
+hdfs dfs -rm -r -skipTrash /user/$VDCLOUD_USER/.spark-upload/spark-upload-* 2>/dev/null || true
+```
+
+### Τοπικός History Server για τα απομακρυσμένα logs
+
+Αν θέλεις να δεις τα event logs του vdcloud από τοπικό Spark History Server:
+
+```bash
+cd ~/bigdata-uth/docker/stacks/history-server-lab
+source ~/bigdata-env.sh
+bigdata_write_history_env
+cat .env
+```
+
+Το `.env` πρέπει να περιέχει τις δικές σου τιμές:
+
+```env
+SPARK_HISTORY_UI_HOST_PORT=18081
+HADOOP_USER_NAME=VDCLOUD_USER
+SPARK_HISTORY_LOG_DIR=hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/VDCLOUD_USER/logs
+```
+
+Μετά ξεκίνα τον History Server:
+
+```bash
+docker compose up --build -d
+curl http://localhost:18081/api/v1/applications
+```
+
+Το `HADOOP_USER_NAME` είναι απαραίτητο γιατί τα `/user/<username>/logs` είναι ιδιωτικά στο HDFS.
 
 ## Αντιμετώπιση προβλημάτων
 
@@ -409,7 +541,26 @@ command -v hdfs
 
 ```bash
 spark-submit --version
-test -f "$SPARK_CONF_DIR/spark-defaults.conf" && sed -n '1,80p' "$SPARK_CONF_DIR/spark-defaults.conf"
+test -f "$SPARK_CONF_DIR/spark-defaults.conf" && cat "$SPARK_CONF_DIR/spark-defaults.conf"
+```
+
+### Λείπει το `spark.kubernetes.file.upload.path`
+
+Αν το `spark-submit code/wordcount.py` ζητήσει `spark.kubernetes.file.upload.path`, λείπει η ρύθμιση που λέει στο Spark πού θα ανεβάσει προσωρινά το local script. Τρέξε ξανά:
+
+```bash
+source ~/bigdata-env.sh
+bigdata_write_spark_defaults
+```
+
+### `Permission denied` στο `.spark-upload` ή στα `logs`
+
+Έλεγξε ότι το `~/.spark/conf/spark-defaults.conf` περιέχει το δικό σου username και στις τρεις σχετικές γραμμές:
+
+```properties
+spark.kubernetes.driverEnv.HADOOP_USER_NAME VDCLOUD_USER
+spark.executorEnv.HADOOP_USER_NAME VDCLOUD_USER
+spark.kubernetes.file.upload.path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/VDCLOUD_USER/.spark-upload
 ```
 
 ### Τα hostnames δεν επιλύονται από το WSL
@@ -426,5 +577,3 @@ getent hosts hdfs-namenode.default.svc.cluster.local
 ## Τι ακολουθεί
 
 Αφού περάσει το πρώτο απομακρυσμένο submit, προχωρήστε στον οδηγό [ίδιων ερωτημάτων στη συστοιχία](../05_cluster-queries-rdd-df-sql/README.md), όπου εκτελούμε τα ίδια `Q1-Q3` ερωτήματα με `RDD`, `DataFrame API` και `Spark SQL`.
-
-

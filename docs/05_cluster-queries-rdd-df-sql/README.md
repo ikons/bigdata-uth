@@ -72,29 +72,32 @@ command -v spark-submit
 
 - `code/RddQ4.py`
 
-## Μεταφόρτωση στο HDFS
+## Προετοιμασία HDFS δεδομένων
 
 Από το WSL terminal σου:
 
 ```bash
 cd ~/bigdata-uth
-hadoop fs -rm -r -f /user/$VDCLOUD_USER/examples /user/$VDCLOUD_USER/code || true
-hadoop fs -mkdir -p /user/$VDCLOUD_USER/examples /user/$VDCLOUD_USER/code
+hadoop fs -ls -d /user/$VDCLOUD_USER/.spark-upload
+hadoop fs -ls -d /user/$VDCLOUD_USER/logs
+
+hadoop fs -mkdir -p /user/$VDCLOUD_USER/examples
+hadoop fs -chmod 700 /user/$VDCLOUD_USER/examples
 hadoop fs -put -f examples/* /user/$VDCLOUD_USER/examples/
-hadoop fs -put -f code/*.py /user/$VDCLOUD_USER/code/
 
 hadoop fs -ls /user/$VDCLOUD_USER/examples
-hadoop fs -ls /user/$VDCLOUD_USER/code
 ```
 
-Η γραμμή cleanup είναι προαιρετική, αλλά βοηθά όταν ξανατρέχετε το ίδιο εργαστήριο και θέλετε καθαρά και προβλέψιμα HDFS inputs.
+Τα `.spark-upload` και `logs` πρέπει να υπάρχουν ήδη από τη δημιουργία του λογαριασμού. Αν λείπουν, το πρόβλημα είναι στο provisioning και πρέπει να ενημερωθεί ο διδάσκων.
+
+Τα `code/*.py` δεν ανεβαίνουν μόνιμα στο HDFS. Τα κρατάμε τοπικά και το Spark τα κάνει προσωρινό staging στο ιδιωτικό `/user/$VDCLOUD_USER/.spark-upload`.
 
 ## Κοινό μοτίβο εκτέλεσης
 
 Το κοινό μοτίβο εκτέλεσης για όλα τα βασικά scripts είναι:
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/<script>.py \
+spark-submit code/<script>.py \
   --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
@@ -102,6 +105,7 @@ spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_U
 
 - ο κώδικας τρέχει χωρίς hardcoded usernames
 - τα δεδομένα διαβάζονται από `hdfs://.../examples/...`
+- το local script ανεβαίνει προσωρινά στο private `.spark-upload`
 - το output γράφεται αυτόματα σε διαδρομή με το `applicationId`
 
 Σημαντικό:
@@ -112,7 +116,7 @@ spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_U
 ## Εισαγωγικό παράδειγμα: Word Count
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/wordcount.py \
+spark-submit code/wordcount.py \
   --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
@@ -238,7 +242,7 @@ if __name__ == "__main__":
 ### Q1 με RDD
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/RddQ1.py \
+spark-submit code/RddQ1.py \
   --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
@@ -341,7 +345,7 @@ if __name__ == "__main__":
 ### Q1 με DataFrame API
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/DFQ1.py \
+spark-submit code/DFQ1.py \
   --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
@@ -453,7 +457,7 @@ if __name__ == "__main__":
 ### Q1 με Spark SQL
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/SQLQ1.py \
+spark-submit code/SQLQ1.py \
   --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
@@ -577,7 +581,7 @@ if __name__ == "__main__":
 ### Q2 με RDD
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/RddQ2.py \
+spark-submit code/RddQ2.py \
   --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
@@ -691,7 +695,7 @@ if __name__ == "__main__":
 ### Q2 με DataFrame API
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/DFQ2.py \
+spark-submit code/DFQ2.py \
   --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
@@ -820,7 +824,7 @@ if __name__ == "__main__":
 ### Q2 με Spark SQL
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/SQLQ2.py \
+spark-submit code/SQLQ2.py \
   --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
@@ -958,7 +962,7 @@ if __name__ == "__main__":
 ### Q3 με RDD
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/RddQ3.py \
+spark-submit code/RddQ3.py \
   --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
@@ -1058,7 +1062,7 @@ if __name__ == "__main__":
 ### Q3 με DataFrame API
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/DFQ3.py \
+spark-submit code/DFQ3.py \
   --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
@@ -1168,7 +1172,7 @@ if __name__ == "__main__":
 ### Q3 με Spark SQL
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/SQLQ3.py \
+spark-submit code/SQLQ3.py \
   --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
@@ -1285,7 +1289,7 @@ if __name__ == "__main__":
 Αυτό είναι επιπλέον tabular example και δεν ανήκει στον βασικό κορμό `Q1-Q3`.
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/DF2b.py \
+spark-submit code/DF2b.py \
   --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
@@ -1415,7 +1419,7 @@ if __name__ == "__main__":
 Το `DFQ3_udf.py` κρατιέται ως επιπλέον παράδειγμα και όχι ως βασική DataFrame υλοποίηση του `Q3`.
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/DFQ3_udf.py \
+spark-submit code/DFQ3_udf.py \
   --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 

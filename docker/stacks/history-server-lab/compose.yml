@@ -10,6 +10,7 @@ services:
     environment:
       - SPARK_HISTORY_LOG_DIR=${SPARK_HISTORY_LOG_DIR:?Set SPARK_HISTORY_LOG_DIR in .env before starting the standalone History Server.}
       - SPARK_HISTORY_UI_PORT=18081
+      - HADOOP_USER_NAME=${HADOOP_USER_NAME:?Set HADOOP_USER_NAME in .env to your lab username.}
     volumes:
       - ../../shared/hadoop-conf/lab-vdcloud/core-site.xml:/opt/spark/conf/core-site.xml:ro
       - ../../shared/hadoop-conf/lab-vdcloud/hdfs-site.xml:/opt/spark/conf/hdfs-site.xml:ro

@@ -72,29 +72,32 @@ Appendix:
 
 - `code/RddQ4.py`
 
-## Upload to HDFS
+## Prepare HDFS data
 
 From your WSL terminal:
 
 ```bash
 cd ~/bigdata-uth
-hadoop fs -rm -r -f /user/$VDCLOUD_USER/examples /user/$VDCLOUD_USER/code || true
-hadoop fs -mkdir -p /user/$VDCLOUD_USER/examples /user/$VDCLOUD_USER/code
+hadoop fs -ls -d /user/$VDCLOUD_USER/.spark-upload
+hadoop fs -ls -d /user/$VDCLOUD_USER/logs
+
+hadoop fs -mkdir -p /user/$VDCLOUD_USER/examples
+hadoop fs -chmod 700 /user/$VDCLOUD_USER/examples
 hadoop fs -put -f examples/* /user/$VDCLOUD_USER/examples/
-hadoop fs -put -f code/*.py /user/$VDCLOUD_USER/code/
 
 hadoop fs -ls /user/$VDCLOUD_USER/examples
-hadoop fs -ls /user/$VDCLOUD_USER/code
 ```
 
-The cleanup line is optional, but useful when you rerun the same lab and want clean, predictable HDFS inputs.
+The `.spark-upload` and `logs` directories should already exist from account provisioning. If they are missing, the provisioning step needs attention; notify the instructor.
+
+Do not upload `code/*.py` permanently to HDFS. Keep scripts local and let Spark stage them temporarily under the private `/user/$VDCLOUD_USER/.spark-upload` directory.
 
 ## The execution pattern
 
 The shared execution pattern for all reference scripts is:
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/<script>.py \
+spark-submit code/<script>.py \
   --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
@@ -102,6 +105,7 @@ With this:
 
 - the code runs without hardcoded usernames
 - data is read from `hdfs://.../examples/...`
+- the local script is staged temporarily under the private `.spark-upload`
 - output is written automatically to a path containing the `applicationId`
 
 Important:
@@ -112,7 +116,7 @@ Important:
 ## Introductory example: Word Count
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/wordcount.py \
+spark-submit code/wordcount.py \
   --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
@@ -238,7 +242,7 @@ The business question is the same in every API:
 ### Q1 with RDD
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/RddQ1.py \
+spark-submit code/RddQ1.py \
   --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
@@ -341,7 +345,7 @@ if __name__ == "__main__":
 ### Q1 with the DataFrame API
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/DFQ1.py \
+spark-submit code/DFQ1.py \
   --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
@@ -453,7 +457,7 @@ if __name__ == "__main__":
 ### Q1 with Spark SQL
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/SQLQ1.py \
+spark-submit code/SQLQ1.py \
   --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
@@ -577,7 +581,7 @@ The business question is:
 ### Q2 with RDD
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/RddQ2.py \
+spark-submit code/RddQ2.py \
   --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
@@ -691,7 +695,7 @@ if __name__ == "__main__":
 ### Q2 with the DataFrame API
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/DFQ2.py \
+spark-submit code/DFQ2.py \
   --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
@@ -820,7 +824,7 @@ if __name__ == "__main__":
 ### Q2 with Spark SQL
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/SQLQ2.py \
+spark-submit code/SQLQ2.py \
   --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
@@ -958,7 +962,7 @@ The business question is:
 ### Q3 with RDD
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/RddQ3.py \
+spark-submit code/RddQ3.py \
   --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
@@ -1058,7 +1062,7 @@ if __name__ == "__main__":
 ### Q3 with the DataFrame API
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/DFQ3.py \
+spark-submit code/DFQ3.py \
   --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
@@ -1168,7 +1172,7 @@ if __name__ == "__main__":
 ### Q3 with Spark SQL
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/SQLQ3.py \
+spark-submit code/SQLQ3.py \
   --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
@@ -1285,7 +1289,7 @@ if __name__ == "__main__":
 This is an additional tabular example and is not part of the main `Q1-Q3` core.
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/DF2b.py \
+spark-submit code/DF2b.py \
   --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
@@ -1415,7 +1419,7 @@ if __name__ == "__main__":
 `DFQ3_udf.py` is retained as an additional example, not as the main DataFrame implementation of `Q3`.
 
 ```bash
-spark-submit hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER/code/DFQ3_udf.py \
+spark-submit code/DFQ3_udf.py \
   --base-path hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/$VDCLOUD_USER
 ```
 
