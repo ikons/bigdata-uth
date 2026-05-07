@@ -22,6 +22,10 @@ DEFAULT_WINDOWS_PANDOC_PATHS = (
     Path.home() / "AppData" / "Local" / "Microsoft" / "WinGet" / "Links" / "pandoc.exe",
     Path("C:/Program Files/Pandoc/pandoc.exe"),
 )
+DEFAULT_WSL_LIBREOFFICE_PYTHON_PATHS = (
+    Path("/mnt/c/Program Files/LibreOffice/program/python.exe"),
+    Path("/mnt/c/Program Files (x86)/LibreOffice/program/python.exe"),
+)
 
 
 def resolve_argument_path(value: str, repo_root: Path) -> Path:
@@ -61,6 +65,75 @@ def resolve_pandoc_executable() -> str:
     )
 
 
+def resolve_wsl_windows_path(path: Path) -> str:
+    wslpath = shutil.which("wslpath")
+    if not wslpath:
+        raise FileNotFoundError("wslpath is required to convert WSL paths for LibreOffice.")
+
+    converted = subprocess.run(
+        [wslpath, "-w", str(path.resolve())],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    if not converted:
+        raise RuntimeError(f"wslpath did not return a Windows path for {path}.")
+
+    return converted
+
+
+def resolve_wsl_libreoffice_python() -> Path | None:
+    explicit_python = os.environ.get("LIBREOFFICE_PYTHON")
+    if explicit_python:
+        candidate = Path(explicit_python).expanduser()
+        if candidate.exists():
+            return candidate.resolve()
+
+    explicit_program = os.environ.get("LIBREOFFICE_PROGRAM") or os.environ.get("UNO_PATH")
+    if explicit_program:
+        candidate = Path(explicit_program).expanduser()
+        python_executable = candidate / "python.exe" if candidate.is_dir() else candidate
+        if python_executable.exists():
+            return python_executable.resolve()
+
+    for candidate in DEFAULT_WSL_LIBREOFFICE_PYTHON_PATHS:
+        if candidate.exists():
+            return candidate.resolve()
+
+    return None
+
+
+def refresh_generated_docx_toc(repo_root: Path, document_paths: list[Path]) -> None:
+    if os.name == "nt" or not document_paths:
+        return
+
+    libreoffice_python = resolve_wsl_libreoffice_python()
+    if libreoffice_python is None:
+        print(
+            "Warning: LibreOffice Python runtime was not found. Skipping DOCX table-of-contents refresh.",
+            file=sys.stderr,
+        )
+        return
+
+    refresh_script = repo_root / "scripts" / "refresh_docx_toc_libreoffice.py"
+    if not refresh_script.exists():
+        print(
+            "Warning: LibreOffice TOC refresh helper script was not found. Skipping DOCX table-of-contents refresh.",
+            file=sys.stderr,
+        )
+        return
+
+    try:
+        command = [
+            str(libreoffice_python),
+            resolve_wsl_windows_path(refresh_script),
+            *[resolve_wsl_windows_path(document_path) for document_path in document_paths],
+        ]
+        subprocess.run(command, check=True)
+    except Exception as exc:
+        print(f"Warning: LibreOffice TOC refresh failed: {exc}", file=sys.stderr)
+
+
 def set_title_style(paragraph) -> None:
     paragraph.style = "Title"
     paragraph.alignment = WD_ALIGN_PARAGRAPH.LEFT
@@ -80,7 +153,7 @@ def apply_postprocessing(document_path: Path) -> None:
     document.save(document_path)
 
 
-def export_entry(repo_root: Path, reference_doc: Path, pandoc_executable: str, entry: dict) -> None:
+def export_entry(repo_root: Path, reference_doc: Path, pandoc_executable: str, entry: dict) -> Path:
     source_path = (repo_root / entry["source"]).resolve()
     output_path = (repo_root / entry["output"]).resolve()
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -99,10 +172,11 @@ def export_entry(repo_root: Path, reference_doc: Path, pandoc_executable: str, e
         f"--output={output_path}",
     ]
 
-    print(f"Exporting {entry['source']} -> {output_path.relative_to(repo_root)}")
+    print(f"Exporting {entry['source']} -> {output_path.relative_to(repo_root)}", flush=True)
     subprocess.run(command, check=True)
 
     apply_postprocessing(output_path)
+    return output_path
 
 
 def parse_args() -> argparse.Namespace:
@@ -148,12 +222,14 @@ def main() -> int:
     if not selected:
         raise SystemExit("No manifest entries matched the requested selection.")
 
+    generated_paths = []
     for entry in selected:
-        export_entry(repo_root, reference_doc, pandoc_executable, entry)
+        generated_paths.append(export_entry(repo_root, reference_doc, pandoc_executable, entry))
+
+    refresh_generated_docx_toc(repo_root, generated_paths)
 
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
