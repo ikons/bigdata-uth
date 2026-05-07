@@ -157,7 +157,7 @@ bigdata_write_history_env() {
     fi
 
     cat > "$stack_dir/.env" <<EOF
-SPARK_HISTORY_UI_HOST_PORT=18081
+SPARK_HISTORY_UI_HOST_PORT=18086
 HADOOP_USER_NAME=${VDCLOUD_USER}
 SPARK_HISTORY_LOG_DIR=hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/${VDCLOUD_USER}/logs
 EOF
@@ -504,7 +504,7 @@ cat .env
 The `.env` file must contain your own values:
 
 ```env
-SPARK_HISTORY_UI_HOST_PORT=18081
+SPARK_HISTORY_UI_HOST_PORT=18086
 HADOOP_USER_NAME=VDCLOUD_USER
 SPARK_HISTORY_LOG_DIR=hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/VDCLOUD_USER/logs
 ```
@@ -513,7 +513,7 @@ Then start the History Server:
 
 ```bash
 docker compose up --build -d
-curl http://localhost:18081/api/v1/applications
+curl http://localhost:18086/api/v1/applications
 ```
 
 `HADOOP_USER_NAME` is required because `/user/<username>/logs` is private in HDFS.
