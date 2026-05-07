@@ -157,7 +157,7 @@ bigdata_write_history_env() {
     fi
 
     cat > "$stack_dir/.env" <<EOF
-SPARK_HISTORY_UI_HOST_PORT=18086
+SPARK_HISTORY_UI_HOST_PORT=18081
 HADOOP_USER_NAME=${VDCLOUD_USER}
 SPARK_HISTORY_LOG_DIR=hdfs://hdfs-namenode.default.svc.cluster.local:9000/user/${VDCLOUD_USER}/logs
 EOF

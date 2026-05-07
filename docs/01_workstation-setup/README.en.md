@@ -358,6 +358,14 @@ mv ./kubectl ~/.local/bin/kubectl
 kubectl version --client
 ```
 
+Optionally, for `k9s`:
+
+```bash
+curl -LO https://github.com/derailed/k9s/releases/download/v0.40.10/k9s_linux_amd64.deb
+sudo dpkg -i k9s_linux_amd64.deb
+echo "export KUBE_EDITOR=nano" >> ~/.bashrc
+```
+
 ## Configure VPN and kubeconfig for `vdcloud`
 
 From the lab email, you should already have downloaded to Windows:
@@ -427,4 +435,3 @@ This option is required for the remote guides `04` and `05`, and it is also the 
 - For `02` and `03`, you may work either from PowerShell or from WSL.
 - For `04` and `05`, work only from WSL.
 - If you start locally on Windows, you can later create a second clone inside WSL just for the remote path.
-

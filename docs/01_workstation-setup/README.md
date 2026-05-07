@@ -366,6 +366,14 @@ mv ./kubectl ~/.local/bin/kubectl
 kubectl version --client
 ```
 
+Προαιρετικά, για `k9s`:
+
+```bash
+curl -LO https://github.com/derailed/k9s/releases/download/v0.40.10/k9s_linux_amd64.deb
+sudo dpkg -i k9s_linux_amd64.deb
+echo "export KUBE_EDITOR=nano" >> ~/.bashrc
+```
+
 ## Ρύθμιση VPN και kubeconfig για το `vdcloud`
 
 Από το email του εργαστηρίου θα έχετε ήδη κατεβάσει στα Windows:
@@ -435,5 +443,4 @@ cd bigdata-uth
 - Για `02` και `03`, μπορείτε να δουλέψετε είτε από PowerShell είτε από WSL.
 - Για `04` και `05`, δουλεύετε μόνο από WSL.
 - Αν ξεκινήσετε τοπικά από Windows, μπορείτε αργότερα να κάνετε δεύτερο clone στο WSL μόνο για την απομακρυσμένη διαδρομή.
-
 
